@@ -1,3 +1,4 @@
+import Like from "../models/Like.js"
 import Profile from "../models/Profile.js"
 
 export const createProfile = async (req, res) => {
@@ -93,6 +94,34 @@ export const updateProfile = async (req, res) => {
     )
 
     res.json(updatedProfile)
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: "Server error",
+      error
+    })
+
+  }
+}
+
+export const discoverProfiles = async (req, res) => {
+  try {
+
+    const { userId } = req.params
+
+    const likes = await Like.find({ senderId: userId })
+
+    const likedUserIds = likes.map(like => like.receiverId)
+
+    const profiles = await Profile.find({
+      userId: {
+        $ne: userId,
+        $nin: likedUserIds
+      }
+    })
+
+    res.json(profiles)
 
   } catch (error) {
 

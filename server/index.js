@@ -6,6 +6,10 @@ import dotenv from "dotenv"
 import authRoutes from "./routes/authRoutes.js"
 import profileRoutes from "./routes/profileRoutes.js"
 import likeRoutes from "./routes/likeRoutes.js"
+import matchRoutes from "./routes/matchRoutes.js"
+import messageRoutes from "./routes/messageRoutes.js"
+import favoriteRoutes from "./routes/favoriteRoutes.js"
+import blockRoutes from "./routes/blockRoutes.js"
 
 dotenv.config()
 
@@ -17,6 +21,10 @@ app.use(express.json())
 app.use("/api/auth", authRoutes)
 app.use("/api/profiles", profileRoutes)
 app.use("/api/likes", likeRoutes)
+app.use("/api/matches", matchRoutes)
+app.use("/api/messages", messageRoutes)
+app.use("/api/favorites", favoriteRoutes)
+app.use("/api/blocks", blockRoutes)
 
 app.get("/", (req, res) => {
   res.send("Allure API running")
