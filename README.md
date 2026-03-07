@@ -85,7 +85,7 @@ This positions the platform as:
 
 ---
 
-# 📊 MVP Feature Build List
+# 📊 MVP Feature Build Roadmap (Technical Build Order)
 
 ## 1. Account Creation Features
 **Affects:** Demand & Supply
@@ -93,9 +93,9 @@ This positions the platform as:
 | Feature Name | Description | Objective | Purpose | Build Status |
 |------|------|------|------|------|
 | User Registration | Allow users to create accounts using email and password | Enable user onboarding | Entry point to the platform | ✅ Implemented |
+| Login System | Users authenticate and access their accounts | Secure user sessions | Allow returning users to access the platform | ✅ Implemented |
 | Email Verification | Users verify their email after signup | Prevent fake accounts | Improve platform trust and security | ⬜ Not Built |
 | Identity Verification | Users submit ID and photo verification | Confirm real identities | Support trust and safety in international dating | ⬜ Not Built |
-| Login System | Users authenticate and access their accounts | Secure user sessions | Allow returning users to access the platform | ✅ Implemented |
 
 ---
 
@@ -108,6 +108,8 @@ This positions the platform as:
 | Profile Photo Upload | Users upload profile photos | Improve engagement | Provide visual representation | ⚠️ Partial (URL-based for now) |
 | Interests & Lifestyle Fields | Users add hobbies and lifestyle preferences | Improve compatibility | Enable smarter match discovery | ✅ Implemented |
 | Relationship Goals Field | Users specify dating intentions | Clarify expectations | Encourage intentional dating | ✅ Implemented |
+| Edit Profile | Users can update their profile details | Maintain profile accuracy | Improve user experience | ⚠️ Partial (API exists) |
+| Update Photos | Users can replace or add profile photos | Improve profile presentation | Encourage profile freshness | ⬜ Not Built |
 
 ---
 
@@ -117,11 +119,11 @@ This positions the platform as:
 | Feature Name | Description | Objective | Purpose | Build Status |
 |------|------|------|------|------|
 | Browse Profiles | Users view other profiles through discovery feed | Enable matchmaking discovery | Allow demand users to explore supply profiles | ✅ Implemented |
-| Demand Discovery Feed | Male users browse female profiles | Enable marketplace demand flow | Allow demand side to explore supply | ⚠️ Partial (currently shows all profiles) |
-| Supply Discovery Logic | Female users primarily see incoming likes instead of browsing all profiles | Align with marketplace model | Maintain supply–demand balance | ⬜ Not Built |
-| Profile Detail View | Users open full profile pages | Provide deeper user information | Help users decide on interaction | ⚠️ Partial (API ready, UI not built) |
-| Search Filters | Users filter profiles by preferences | Improve discovery efficiency | Help users find compatible matches | ⬜ Not Built |
 | Discovery Visibility Rules | Prevent showing already liked, blocked, or interacted profiles | Maintain clean discovery experience | Avoid duplicate profile exposure | ✅ Implemented |
+| Demand Discovery Feed | Male users browse female profiles | Enable marketplace demand flow | Allow demand side to explore supply | ✅ Implemented |
+| Profile Detail View | Users open full profile pages | Provide deeper user information | Help users decide on interaction | ⚠️ Partial (API ready, UI not built) |
+| Search Filters | Users filter profiles by preferences | Improve discovery efficiency | Help users find compatible matches | ✅ Implemented |
+| Supply Discovery Logic | Female users primarily see incoming likes instead of browsing all profiles | Align with marketplace model | Maintain supply–demand balance | ⬜ Not Built |
 
 ---
 
@@ -164,23 +166,21 @@ This positions the platform as:
 
 | Feature Name | Description | Objective | Purpose | Build Status |
 |------|------|------|------|------|
-| User Reporting | Users can report suspicious accounts | Enable moderation | Reduce scams and abuse | ⬜ Not Built |
-| Profile Verification Badge | Verified users receive badges | Build trust | Increase platform credibility | ⬜ Not Built |
 | Block Users | Users can block unwanted interactions | Protect user experience | Improve platform safety | ✅ Implemented |
 | Unblock Users | Users can remove previously blocked users | Allow users to reverse blocking decisions | Restore interaction permissions | ✅ Implemented |
-| Interaction Abuse Prevention | Prevent repeated like/unlike spam | Protect platform integrity | Maintain fair user interaction | ⬜ Not Built |
+| User Reporting | Users can report suspicious accounts | Enable moderation | Reduce scams and abuse | ✅ Implemented |
+| Profile Verification Badge | Verified users receive badges | Build trust | Increase platform credibility | ✅ Implemented |
+| Interaction Abuse Prevention | Prevent repeated like/unlike spam | Protect platform integrity | Maintain fair user interaction | ✅ Implemented |
 
 ---
 
-## 8. Monetization Features
-**Affects:** Demand (Primary Market)
+## 8. User Settings Features
+**Affects:** Demand & Supply
 
 | Feature Name | Description | Objective | Purpose | Build Status |
 |------|------|------|------|------|
-| Message Limits | Free users have limited daily messages | Encourage premium upgrade | Balance free and paid usage | ⬜ Not Built |
-| Premium Subscription | Paid plan unlocks full features | Generate platform revenue | Support freemium business model | ⬜ Not Built |
-| Unlimited Messaging | Premium users send unlimited messages | Improve interaction freedom | Provide subscription value | ⬜ Not Built |
-| Profile Boost | Premium users increase profile visibility | Improve match opportunities | Encourage premium upgrades | ⬜ Not Built |
+| Account Settings | Users manage account preferences | Give users control over accounts | Improve usability | ⬜ Not Built |
+| Delete Account | Users can remove their accounts | Support user autonomy | Maintain platform transparency | ✅ Implemented |
 
 ---
 
@@ -195,15 +195,15 @@ This positions the platform as:
 
 ---
 
-## 10. User Settings Features
-**Affects:** Demand & Supply
+## 10. Monetization Features
+**Affects:** Demand (Primary Market)
 
 | Feature Name | Description | Objective | Purpose | Build Status |
 |------|------|------|------|------|
-| Edit Profile | Users can update their profile details | Maintain profile accuracy | Improve user experience | ⚠️ Partial (API exists) |
-| Update Photos | Users can replace or add profile photos | Improve profile presentation | Encourage profile freshness | ⬜ Not Built |
-| Account Settings | Users manage account preferences | Give users control over accounts | Improve usability | ⬜ Not Built |
-| Delete Account | Users can remove their accounts | Support user autonomy | Maintain platform transparency | ⬜ Not Built |
+| Message Limits | Free users have limited daily messages | Encourage premium upgrade | Balance free and paid usage | ⬜ Not Built |
+| Premium Subscription | Paid plan unlocks full features | Generate platform revenue | Support freemium business model | ⬜ Not Built |
+| Unlimited Messaging | Premium users send unlimited messages | Improve interaction freedom | Provide subscription value | ⬜ Not Built |
+| Profile Boost | Premium users increase profile visibility | Improve match opportunities | Encourage premium upgrades | ⬜ Not Built |
 
 ---
 
@@ -215,6 +215,153 @@ This positions the platform as:
 | Report Review System | Admin can review reported users | Maintain platform safety | Remove abusive users | ⬜ Not Built |
 | User Suspension | Admin can temporarily suspend accounts | Enforce platform rules | Prevent misuse | ⬜ Not Built |
 | User Deletion | Admin can permanently remove users | Maintain platform integrity | Protect community | ⬜ Not Built |
+
+---
+
+## 🧭 Development Principle: Technical Build Order
+
+To avoid endlessly adding features and delaying release, the application must be developed using **technical dependency order** rather than simply completing every feature listed in the roadmap.
+
+Technical build order means **building the systems that other systems depend on first**. Features that do not block the core product flow should not delay development.
+
+The goal is to first complete the **core interaction loop** of the product before expanding the system with trust features, monetization features, notifications, or administrative tools.
+
+---
+
+## Core Product Loop
+
+Register → Login → Create Profile → Discover Profiles → Like → Match → Message
+
+If this loop works end-to-end, the platform is already **functionally usable as an MVP**.
+
+Features that support this loop should always be prioritized.
+
+---
+
+## Development Priority Layers
+
+Features should be developed in the following order based on technical dependency.
+
+### Layer 1 — Core Platform Infrastructure
+
+- Account creation
+- Login system
+- Profile creation
+
+These systems allow users to **enter the platform and exist within the system**.
+
+---
+
+### Layer 2 — Discovery System
+
+- Profile browsing
+- Discovery feed
+- Discovery filtering rules
+- Search filters
+
+These systems allow users to **find other users on the platform**.
+
+---
+
+### Layer 3 — Interaction System
+
+- Likes
+- Favorites
+- Incoming likes
+
+These systems allow users to **express interest in other users**.
+
+---
+
+### Layer 4 — Matching System
+
+- Match creation
+- Match list
+- Match inbox
+
+These systems create **mutual connections between users**.
+
+---
+
+### Layer 5 — Communication System
+
+- Direct messaging
+- Conversation history
+- Messaging permission enforcement
+
+These systems allow **matched users to communicate**.
+
+---
+
+### Layer 6 — Safety Controls
+
+- Blocking
+- Unblocking
+- Interaction abuse prevention
+- Reporting
+
+These systems protect the **user experience and platform safety**.
+
+---
+
+### Layer 7 — Trust Features
+
+- Email verification
+- Identity verification
+- Profile verification badges
+
+These increase **platform credibility and trust**, but are not required for the core interaction loop.
+
+---
+
+### Layer 8 — Monetization
+
+- Message limits
+- Premium subscriptions
+- Boost features
+
+These enable **platform revenue generation** once the product mechanics are working.
+
+---
+
+### Layer 9 — Platform Management
+
+- Admin moderation
+- User suspension
+- Admin deletion
+
+These support **long-term platform operations and governance**.
+
+---
+
+## Important Rule
+
+If a feature **does not block the core interaction loop**, it should not delay development.
+
+Development should remain focused on making the **core user journey fully functional first**, and only then expanding the platform with additional systems.
+
+---
+
+## 🤖 AI Development Prompt
+
+We are building this application using **technical build order**.
+
+Only recommend features that are necessary to support the **current development layer**.
+
+Do not introduce new features unless they directly support the **core interaction loop**.
+
+### Core Interaction Loop
+
+Register → Login → Create Profile → Discover Profiles → Like → Match → Message
+
+### Development Rules
+
+- Prioritize **backend dependencies first**.
+- Avoid suggesting **monetization, notifications, or advanced trust features** until the core platform mechanics are fully implemented.
+- Only suggest features that **directly unblock the next step of the core loop**.
+- If suggesting a feature, explain:
+  - **Which development layer it belongs to**
+  - **Why it is required at the current stage of development**.
 
 ---
 
