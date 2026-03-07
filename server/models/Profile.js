@@ -35,6 +35,11 @@ const profileSchema = new mongoose.Schema(
 
   photos: {
     type: [String]
+  },
+
+  isVerified: {
+    type: Boolean,
+    default: false
   }
 
 },

@@ -4,7 +4,9 @@ import {
   getProfiles,
   getProfileById,
   updateProfile,
-  discoverProfiles
+  discoverProfiles,
+  verifyProfile,
+  deleteAccount
 } from "../controllers/profileController.js"
 
 const router = express.Router()
@@ -14,5 +16,11 @@ router.get("/", getProfiles)
 router.get("/:id", getProfileById)
 router.patch("/:id", updateProfile)
 router.get("/discover/:userId", discoverProfiles)
+
+/* Profile Verification */
+router.patch("/verify/:id", verifyProfile)
+
+/* Delete Account */
+router.delete("/account/:userId", deleteAccount)
 
 export default router

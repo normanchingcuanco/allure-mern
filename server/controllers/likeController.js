@@ -10,6 +10,20 @@ export const sendLike = async (req, res) => {
       return res.status(400).json({ message: "You cannot like yourself" })
     }
 
+    // RATE LIMIT: max 30 likes per hour
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
+
+    const recentLikes = await Like.countDocuments({
+      senderId,
+      createdAt: { $gte: oneHourAgo }
+    })
+
+    if (recentLikes >= 30) {
+      return res.status(429).json({
+        message: "Too many likes. Please try again later."
+      })
+    }
+
     const existingLike = await Like.findOne({ senderId, receiverId })
 
     if (existingLike) {
@@ -44,8 +58,11 @@ export const sendLike = async (req, res) => {
         })
 
         await match.save()
+
       } else {
+
         match = existingMatch
+
       }
     }
 
@@ -91,7 +108,7 @@ export const getReceivedLikes = async (req, res) => {
 
     const likes = await Like.find({
       receiverId: userId
-    }).populate("senderId", "email")
+    }).populate("senderId", "email gender")
 
     res.json(likes)
 
