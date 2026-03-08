@@ -33,7 +33,13 @@ const userSchema = new mongoose.Schema(
 
     verificationToken: {
         type: String
+    },
+
+    isSuspended: {
+        type: Boolean,
+        default: false
     }
+
 },
 {
     timestamps: true

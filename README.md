@@ -123,7 +123,7 @@ This positions the platform as:
 | Demand Discovery Feed | Male users browse female profiles | Enable marketplace demand flow | Allow demand side to explore supply | ✅ Implemented |
 | Profile Detail View | Users open full profile pages | Provide deeper user information | Help users decide on interaction | ⚠️ Partial (API ready, UI not built) |
 | Search Filters | Users filter profiles by preferences | Improve discovery efficiency | Help users find compatible matches | ✅ Implemented |
-| Supply Discovery Logic | Female users primarily see incoming likes instead of browsing all profiles | Align with marketplace model | Maintain supply–demand balance | ⬜ Not Built |
+| Supply Discovery Logic | Female users primarily see incoming likes instead of browsing all profiles | Align with marketplace model | Maintain supply–demand balance | ✅ Implemented |
 
 ---
 
@@ -212,9 +212,9 @@ This positions the platform as:
 
 | Feature Name | Description | Objective | Purpose | Build Status |
 |------|------|------|------|------|
-| Report Review System | Admin can review reported users | Maintain platform safety | Remove abusive users | ⬜ Not Built |
-| User Suspension | Admin can temporarily suspend accounts | Enforce platform rules | Prevent misuse | ⬜ Not Built |
-| User Deletion | Admin can permanently remove users | Maintain platform integrity | Protect community | ⬜ Not Built |
+| Report Review System | Admin can review reported users | Maintain platform safety | Remove abusive users | ✅ Implemented |
+| User Suspension | Admin can temporarily suspend accounts | Enforce platform rules | Prevent misuse | ✅ Implemented |
+| User Deletion | Admin can permanently remove users | Maintain platform integrity | Protect community | ✅ Implemented |
 
 ---
 

@@ -100,13 +100,26 @@ export const discoverProfiles = async (req, res) => {
 
     const currentUser = await User.findById(userId)
 
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found" })
+    }
+
+    /* SUPPLY LOGIC: female users see incoming likes */
+    if (currentUser.gender === "female") {
+
+      const likes = await Like.find({ receiverId: userId })
+        .populate("senderId")
+
+      return res.json({
+        mode: "incoming_likes",
+        likes
+      })
+    }
+
+    /* DEMAND LOGIC: male users browse profiles */
+
     const likes = await Like.find({ senderId: userId })
     const likedUserIds = likes.map(like => like.receiverId)
-
-    let targetGender = null
-
-    if (currentUser.gender === "male") targetGender = "female"
-    if (currentUser.gender === "female") targetGender = "male"
 
     let filter = {
       userId: {
@@ -137,11 +150,13 @@ export const discoverProfiles = async (req, res) => {
 
     const filteredProfiles = profiles.filter(profile => {
       if (!profile.userId) return false
-      if (!targetGender) return true
-      return profile.userId.gender === targetGender
+      return profile.userId.gender === "female"
     })
 
-    res.json(filteredProfiles)
+    res.json({
+      mode: "browse",
+      profiles: filteredProfiles
+    })
 
   } catch (error) {
 
