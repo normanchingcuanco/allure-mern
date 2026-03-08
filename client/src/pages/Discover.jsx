@@ -1,28 +1,43 @@
 import { useEffect, useState } from "react"
 import api from "../api/axios"
+import { useAuth } from "../context/AuthContext"
+import Navbar from "../components/Navbar"
 
 export default function Discover() {
+
+  const { userId } = useAuth()
 
   const [profiles, setProfiles] = useState([])
   const [mode, setMode] = useState("")
 
-  const userId = "69ad6ba34627d46e69c2805b" // Michael
-
   useEffect(() => {
+
     const fetchProfiles = async () => {
-      const res = await api.get(`/profiles/discover/${userId}`)
 
-      setMode(res.data.mode)
+      if (!userId) return
 
-      if (res.data.mode === "browse") {
-        setProfiles(res.data.profiles)
+      try {
+
+        const res = await api.get(`/profiles/discover/${userId}`)
+
+        setMode(res.data.mode)
+
+        if (res.data.mode === "browse") {
+          setProfiles(res.data.profiles || [])
+        }
+
+      } catch (err) {
+        console.error(err)
       }
+
     }
 
     fetchProfiles()
-  }, [])
+
+  }, [userId])
 
   const handleLike = async (receiverId) => {
+
     try {
 
       await api.post("/likes", {
@@ -35,29 +50,41 @@ export default function Discover() {
     } catch (err) {
       console.error(err)
     }
+
   }
 
   return (
-    <div>
+    <>
+      <Navbar />
 
-      <h1>Discover</h1>
+      <div>
 
-      <p>Mode: {mode}</p>
+        <h1>Discover</h1>
 
-      {profiles.map((profile) => (
-        <div key={profile._id} style={{border:"1px solid #ccc", margin:"10px", padding:"10px"}}>
+        <p>Mode: {mode}</p>
 
-          <h3>{profile.name}</h3>
-          <p>Age: {profile.age}</p>
-          <p>{profile.bio}</p>
+        {profiles.length === 0 && <p>No profiles available</p>}
 
-          <button onClick={() => handleLike(profile.userId._id)}>
-            Like
-          </button>
+        {profiles.map((profile) => (
 
-        </div>
-      ))}
+          <div
+            key={profile._id}
+            style={{ border: "1px solid #ccc", margin: "10px", padding: "10px" }}
+          >
 
-    </div>
+            <h3>{profile.name}</h3>
+            <p>Age: {profile.age}</p>
+            <p>{profile.bio}</p>
+
+            <button onClick={() => handleLike(profile.userId._id)}>
+              Like
+            </button>
+
+          </div>
+
+        ))}
+
+      </div>
+    </>
   )
-}
+  }

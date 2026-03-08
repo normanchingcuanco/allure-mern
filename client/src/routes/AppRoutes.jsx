@@ -7,17 +7,60 @@ import Likes from "../pages/Likes"
 import Matches from "../pages/Matches"
 import Chat from "../pages/Chat"
 
+import ProtectedRoute from "../components/ProtectedRoute"
+
 export default function AppRoutes() {
+
   return (
     <BrowserRouter>
+
       <Routes>
+
+        {/* Public routes */}
+
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/discover" element={<Discover />} />
-        <Route path="/likes" element={<Likes />} />
-        <Route path="/matches" element={<Matches />} />
-        <Route path="/chat/:matchId" element={<Chat />} />
+
+        {/* Protected routes */}
+
+        <Route
+          path="/discover"
+          element={
+            <ProtectedRoute>
+              <Discover />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/likes"
+          element={
+            <ProtectedRoute>
+              <Likes />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/matches"
+          element={
+            <ProtectedRoute>
+              <Matches />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/chat/:matchId"
+          element={
+            <ProtectedRoute>
+              <Chat />
+            </ProtectedRoute>
+          }
+        />
+
       </Routes>
+
     </BrowserRouter>
   )
 }
