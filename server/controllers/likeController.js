@@ -121,3 +121,19 @@ export const getReceivedLikes = async (req, res) => {
 
   }
 }
+
+export const getIncomingLikes = async (req, res) => {
+  try {
+
+    const { userId } = req.params
+
+    const likes = await Like.find({ receiverId: userId })
+      .populate("senderId", "email")
+
+    res.json(likes)
+
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: "Failed to fetch incoming likes" })
+  }
+}

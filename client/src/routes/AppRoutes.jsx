@@ -10,6 +10,8 @@ import CreateProfile from "../pages/CreateProfile"
 import Profile from "../pages/Profile"
 import EditProfile from "../pages/EditProfile"
 import MessageRequests from "../pages/MessageRequests"
+import Favorites from "../pages/Favorites"
+import IncomingLikes from "../pages/IncomingLikes"
 
 import ProtectedRoute from "../components/ProtectedRoute"
 
@@ -40,7 +42,7 @@ export default function AppRoutes() {
           path="/likes"
           element={
             <ProtectedRoute>
-              <Likes />
+              <IncomingLikes />
             </ProtectedRoute>
           }
         />
@@ -91,6 +93,8 @@ export default function AppRoutes() {
         />
 
         <Route path="/message-requests" element={<MessageRequests />} />
+        <Route path="/favorites" element={<Favorites />} />
+        <Route path="/incoming-likes" element={<IncomingLikes />} />
 
       </Routes>
 

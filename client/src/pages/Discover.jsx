@@ -56,6 +56,23 @@ export default function Discover() {
 
   }
 
+  const handleFavorite = async (profileId) => {
+
+    try {
+
+      await api.post("/favorites", {
+        userId,
+        profileId
+      })
+
+      alert("Profile added to favorites")
+
+    } catch (err) {
+      console.error(err)
+    }
+
+  }
+
   return (
     <>
       <Navbar />
@@ -100,6 +117,15 @@ export default function Discover() {
               }}
             >
               Like
+            </button>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleFavorite(profile._id)
+              }}
+            >
+              Favorite
             </button>
 
           </div>

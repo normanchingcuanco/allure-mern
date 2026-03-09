@@ -133,8 +133,8 @@ This positions the platform as:
 | Feature Name | Description | Objective | Purpose | Build Status |
 |------|------|------|------|------|
 | Like System | Users can like other profiles | Express interest | Enable match creation | ✅ Implemented |
-| Incoming Likes | Users can see who liked their profile | Enable supply-side interaction review | Allow supply users to accept or ignore demand | ⚠️ Partial (basic UI implemented) |
-| Favorite Profiles | Users bookmark profiles | Save interesting profiles | Encourage return engagement | ⚠️ Partial (backend implemented, UI incomplete) |
+| Incoming Likes | Users can see who liked their profile and choose to like back | Enable supply-side interaction review | Allow supply users to accept or ignore demand | ✅ Implemented |
+| Favorite Profiles | Users bookmark profiles | Save interesting profiles | Encourage return engagement | ⚠️ Partial (basic UI implemented) |
 | Message Requests | Users send messages before matching | Enable direct interaction | Increase conversation opportunities | ✅ Implemented |
 
 ---
