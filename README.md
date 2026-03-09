@@ -134,8 +134,8 @@ This positions the platform as:
 |------|------|------|------|------|
 | Like System | Users can like other profiles | Express interest | Enable match creation | ✅ Implemented |
 | Incoming Likes | Users can see who liked their profile | Enable supply-side interaction review | Allow supply users to accept or ignore demand | ⚠️ Partial (basic UI implemented) |
-| Favorite Profiles | Users bookmark profiles | Save interesting profiles | Encourage return engagement | ⚠️ Partial (backend only) |
-| Message Requests | Users send messages before matching | Enable direct interaction | Increase conversation opportunities | ⬜ Not Built |
+| Favorite Profiles | Users bookmark profiles | Save interesting profiles | Encourage return engagement | ⚠️ Partial (backend implemented, UI incomplete) |
+| Message Requests | Users send messages before matching | Enable direct interaction | Increase conversation opportunities | ✅ Implemented |
 
 ---
 

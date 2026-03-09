@@ -9,6 +9,7 @@ import Chat from "../pages/Chat"
 import CreateProfile from "../pages/CreateProfile"
 import Profile from "../pages/Profile"
 import EditProfile from "../pages/EditProfile"
+import MessageRequests from "../pages/MessageRequests"
 
 import ProtectedRoute from "../components/ProtectedRoute"
 
@@ -88,6 +89,8 @@ export default function AppRoutes() {
             </ProtectedRoute>
           }
         />
+
+        <Route path="/message-requests" element={<MessageRequests />} />
 
       </Routes>
 

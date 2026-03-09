@@ -12,6 +12,7 @@ import favoriteRoutes from "./routes/favoriteRoutes.js"
 import blockRoutes from "./routes/blockRoutes.js"
 import reportRoutes from "./routes/reportRoutes.js"
 import adminRoutes from "./routes/adminRoutes.js"
+import messageRequestRoutes from "./routes/messageRequestRoutes.js"
 
 dotenv.config()
 
@@ -29,6 +30,7 @@ app.use("/api/favorites", favoriteRoutes)
 app.use("/api/blocks", blockRoutes)
 app.use("/api/reports", reportRoutes)
 app.use("/api/admin", adminRoutes)
+app.use("/api/message-requests", messageRequestRoutes)
 
 app.get("/", (req, res) => {
   res.send("Allure API running")
