@@ -1,25 +1,24 @@
 import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
 import api from "../api/axios"
 import { useAuth } from "../context/AuthContext"
+import Navbar from "../components/Navbar"
+import { useNavigate } from "react-router-dom"
 
 export default function Matches() {
 
   const { userId } = useAuth()
-  const [matches, setMatches] = useState([])
   const navigate = useNavigate()
+
+  const [matches, setMatches] = useState([])
 
   useEffect(() => {
 
     const fetchMatches = async () => {
 
-      if (!userId) return
-
       try {
 
         const res = await api.get(`/matches/${userId}`)
-
-        setMatches(res.data)
+        setMatches(res.data || [])
 
       } catch (err) {
         console.error(err)
@@ -32,9 +31,10 @@ export default function Matches() {
   }, [userId])
 
   return (
-    <div>
+    <>
+      <Navbar />
 
-      <h1>Your Matches</h1>
+      <h1>Matches</h1>
 
       {matches.length === 0 && <p>No matches yet</p>}
 
@@ -42,16 +42,43 @@ export default function Matches() {
 
         <div
           key={match.matchId}
-          style={{border:"1px solid #ccc", margin:"10px", padding:"10px", cursor:"pointer"}}
           onClick={() => navigate(`/chat/${match.matchId}`)}
+          style={{
+            border: "1px solid #ddd",
+            padding: "15px",
+            margin: "10px",
+            borderRadius: "10px",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "15px"
+          }}
         >
 
-          <p>{match.user?.email}</p>
+          {match.user.profile?.photos?.[0] && (
+            <img
+              src={match.user.profile.photos[0]}
+              alt="profile"
+              width="60"
+              height="60"
+              style={{ borderRadius: "50%", objectFit: "cover" }}
+            />
+          )}
+
+          <div>
+
+            <h3>{match.user.profile?.name || match.user.email}</h3>
+
+            {match.lastMessage && (
+              <p>{match.lastMessage}</p>
+            )}
+
+          </div>
 
         </div>
 
       ))}
 
-    </div>
+    </>
   )
 }

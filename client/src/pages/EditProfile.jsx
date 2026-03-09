@@ -62,6 +62,7 @@ export default function EditProfile() {
           name="name"
           value={profile.name}
           onChange={handleChange}
+          placeholder="Name"
         />
 
         <br /><br />
@@ -70,6 +71,7 @@ export default function EditProfile() {
           name="age"
           value={profile.age}
           onChange={handleChange}
+          placeholder="Age"
         />
 
         <br /><br />
@@ -78,6 +80,7 @@ export default function EditProfile() {
           name="bio"
           value={profile.bio}
           onChange={handleChange}
+          placeholder="Bio"
         />
 
         <br /><br />
@@ -86,6 +89,7 @@ export default function EditProfile() {
           name="lifestyle"
           value={profile.lifestyle}
           onChange={handleChange}
+          placeholder="Lifestyle"
         />
 
         <br /><br />
@@ -94,6 +98,21 @@ export default function EditProfile() {
           name="relationshipGoals"
           value={profile.relationshipGoals}
           onChange={handleChange}
+          placeholder="Relationship Goals"
+        />
+
+        <br /><br />
+
+        <input
+          name="photos"
+          value={profile.photos?.join(",")}
+          onChange={(e) =>
+            setProfile({
+              ...profile,
+              photos: e.target.value.split(",")
+            })
+          }
+          placeholder="Photo URLs (comma separated)"
         />
 
         <br /><br />

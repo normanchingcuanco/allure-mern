@@ -81,6 +81,14 @@ export default function Discover() {
             }}
           >
 
+            {profile.photos && profile.photos.length > 0 && (
+              <img
+                src={profile.photos[0]}
+                alt={profile.name}
+                style={{ width: "200px", borderRadius: "10px" }}
+              />
+            )}
+
             <h3>{profile.name}</h3>
             <p>Age: {profile.age}</p>
             <p>{profile.bio}</p>

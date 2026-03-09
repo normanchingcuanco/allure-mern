@@ -18,8 +18,7 @@ export default function Chat() {
       try {
 
         const res = await api.get(`/messages/${matchId}`)
-
-        setMessages(res.data)
+        setMessages(res.data || [])
 
       } catch (err) {
         console.error(err)
@@ -29,19 +28,33 @@ export default function Chat() {
 
     fetchMessages()
 
+    const interval = setInterval(fetchMessages, 3000)
+
+    return () => clearInterval(interval)
+
   }, [matchId])
 
   const sendMessage = async () => {
 
+    if (!text.trim()) return
+
     try {
+
+      const receiverId =
+        messages.length > 0
+          ? (messages[0].senderId === userId
+              ? messages[0].receiverId
+              : messages[0].senderId)
+          : null
 
       await api.post("/messages", {
         matchId,
         senderId: userId,
+        receiverId,
         text
       })
 
-      setMessages([...messages, { text }])
+      setMessages([...messages, { text, senderId: userId }])
       setText("")
 
     } catch (err) {
@@ -55,13 +68,35 @@ export default function Chat() {
 
       <h1>Chat</h1>
 
-      {messages.map((msg) => (
+      {messages.map((msg) => {
 
-        <div key={msg._id || msg.text}>
-          <p>{msg.text}</p>
-        </div>
+        const isMe = msg.senderId === userId
 
-      ))}
+        return (
+          <div
+            key={msg._id || msg.text}
+            style={{
+              display: "flex",
+              justifyContent: isMe ? "flex-end" : "flex-start",
+              margin: "10px"
+            }}
+          >
+
+            <div
+              style={{
+                background: isMe ? "#DCF8C6" : "#eee",
+                padding: "10px",
+                borderRadius: "10px",
+                maxWidth: "60%"
+              }}
+            >
+              <p style={{ margin: 0 }}>{msg.text}</p>
+            </div>
+
+          </div>
+        )
+
+      })}
 
       <input
         value={text}
