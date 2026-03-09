@@ -13,41 +13,55 @@ export default function Login() {
 
   const handleLogin = async (e) => {
 
-    e.preventDefault()
+  e.preventDefault()
 
+  try {
+
+    const res = await api.post("/auth/login", {
+      email,
+      password
+    })
+
+    console.log("LOGIN RESPONSE:", res.data)
+
+    const userId =
+      res.data.user?._id ||
+      res.data.user?.id ||
+      res.data.userId ||
+      res.data.id
+
+    const token = res.data.token
+
+    if (!userId || !token) {
+      throw new Error("Invalid login response structure")
+    }
+
+    login(userId, token)
+
+    // CHECK IF PROFILE EXISTS USING DISCOVER ENDPOINT
     try {
 
-      const res = await api.post("/auth/login", {
-        email,
-        password
-      })
+      const discoverRes = await api.get(`/profiles/discover/${userId}`)
 
-      console.log("LOGIN RESPONSE:", res.data)
-
-      const userId =
-        res.data.user?._id ||
-        res.data.user?.id ||
-        res.data.userId ||
-        res.data.id
-
-      const token = res.data.token
-
-      if (!userId || !token) {
-        throw new Error("Invalid login response structure")
+      if (discoverRes.data) {
+        navigate("/discover")
       }
 
-      login(userId, token)
+    } catch (error) {
 
-      navigate("/discover")
-
-    } catch (err) {
-
-      console.error(err)
-      alert("Login failed")
+      // If discover fails, assume no profile exists
+      navigate("/create-profile")
 
     }
 
+  } catch (err) {
+
+    console.error(err)
+    alert("Login failed")
+
   }
+
+}
 
   return (
     <div>

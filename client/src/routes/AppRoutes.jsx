@@ -6,6 +6,9 @@ import Discover from "../pages/Discover"
 import Likes from "../pages/Likes"
 import Matches from "../pages/Matches"
 import Chat from "../pages/Chat"
+import CreateProfile from "../pages/CreateProfile"
+import Profile from "../pages/Profile"
+import EditProfile from "../pages/EditProfile"
 
 import ProtectedRoute from "../components/ProtectedRoute"
 
@@ -55,6 +58,33 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <Chat />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/create-profile"
+          element={
+            <ProtectedRoute>
+              <CreateProfile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profile/:userId"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/edit-profile"
+          element={
+            <ProtectedRoute>
+              <EditProfile />
             </ProtectedRoute>
           }
         />

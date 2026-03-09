@@ -6,7 +6,8 @@ import {
   updateProfile,
   discoverProfiles,
   verifyProfile,
-  deleteAccount
+  deleteAccount,
+  getMyProfile
 } from "../controllers/profileController.js"
 
 const router = express.Router()
@@ -15,6 +16,7 @@ router.post("/", createProfile)
 router.get("/", getProfiles)
 router.get("/:id", getProfileById)
 router.patch("/:id", updateProfile)
+router.get("/user/:userId", getMyProfile)
 router.get("/discover/:userId", discoverProfiles)
 
 /* Profile Verification */

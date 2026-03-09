@@ -30,6 +30,10 @@ export default function Navbar() {
         Logout
       </button>
 
+      <button onClick={() => navigate("/edit-profile")}>
+        Edit Profile
+      </button>
+
     </div>
   )
 }

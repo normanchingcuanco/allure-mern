@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import api from "../api/axios"
 import { useAuth } from "../context/AuthContext"
 import Navbar from "../components/Navbar"
+import { useNavigate } from "react-router-dom"
 
 export default function Discover() {
 
@@ -9,6 +10,8 @@ export default function Discover() {
 
   const [profiles, setProfiles] = useState([])
   const [mode, setMode] = useState("")
+
+  const navigate = useNavigate()
 
   useEffect(() => {
 
@@ -69,14 +72,25 @@ export default function Discover() {
 
           <div
             key={profile._id}
-            style={{ border: "1px solid #ccc", margin: "10px", padding: "10px" }}
+            onClick={() => navigate(`/profile/${profile.userId._id}`)}
+            style={{
+              border: "1px solid #ccc",
+              margin: "10px",
+              padding: "10px",
+              cursor: "pointer"
+            }}
           >
 
             <h3>{profile.name}</h3>
             <p>Age: {profile.age}</p>
             <p>{profile.bio}</p>
 
-            <button onClick={() => handleLike(profile.userId._id)}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleLike(profile.userId._id)
+              }}
+            >
               Like
             </button>
 
@@ -87,4 +101,4 @@ export default function Discover() {
       </div>
     </>
   )
-  }
+}

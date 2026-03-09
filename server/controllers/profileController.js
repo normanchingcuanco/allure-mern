@@ -104,11 +104,14 @@ export const discoverProfiles = async (req, res) => {
       return res.status(404).json({ message: "User not found" })
     }
 
-    /* SUPPLY LOGIC: female users see incoming likes */
+    // Female users see incoming likes
     if (currentUser.gender === "female") {
 
       const likes = await Like.find({ receiverId: userId })
-        .populate("senderId")
+        .populate({
+          path: "senderId",
+          select: "-password"
+        })
 
       return res.json({
         mode: "incoming_likes",
@@ -222,5 +225,24 @@ export const deleteAccount = async (req, res) => {
       error
     })
 
+  }
+}
+
+export const getMyProfile = async (req, res) => {
+  try {
+
+    const { userId } = req.params
+
+    const profile = await Profile.findOne({ userId })
+
+    if (!profile) {
+      return res.status(404).json({ message: "Profile not found" })
+    }
+
+    res.json(profile)
+
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: "Server error" })
   }
 }
