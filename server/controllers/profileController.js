@@ -1,6 +1,7 @@
 import Like from "../models/Like.js"
 import Profile from "../models/Profile.js"
 import User from "../models/User.js"
+import Block from "../models/Block.js"
 
 export const createProfile = async (req, res) => {
   try {
@@ -125,10 +126,25 @@ export const discoverProfiles = async (req, res) => {
     const likes = await Like.find({ senderId: userId })
     const likedUserIds = likes.map(like => like.receiverId)
 
+    /* Get blocked users */
+
+    const blocks = await Block.find({
+      $or: [
+        { blockerId: userId },
+        { blockedId: userId }
+      ]
+    })
+
+    const blockedUserIds = blocks.map(block =>
+      block.blockerId.toString() === userId
+        ? block.blockedId
+        : block.blockerId
+    )
+
     let filter = {
       userId: {
         $ne: userId,
-        $nin: likedUserIds
+        $nin: [...likedUserIds, ...blockedUserIds]
       }
     }
 
@@ -171,6 +187,7 @@ export const discoverProfiles = async (req, res) => {
 
   }
 }
+
 
 export const verifyProfile = async (req, res) => {
   try {
@@ -246,4 +263,22 @@ export const getMyProfile = async (req, res) => {
     console.error(error)
     res.status(500).json({ message: "Server error" })
   }
-}
+}[nodemon] starting `node index.js`
+file:///C:/Users/User/Downloads/Zuitt/B598/Portfolio%20Projects/allure-fullstack/server/index.js:16
+import blockRoutes from "./routes/blockRoutes.js"
+^^^^^^^^^^^^^^^^^^
+
+SyntaxError: Identifier 'blockRoutes' has already been declared
+    at compileSourceTextModule (node:internal/modules/esm/utils:318:16)
+    at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:111:18)
+    at #translate (node:internal/modules/esm/loader:473:20)
+    at afterLoad (node:internal/modules/esm/loader:529:29)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:534:12)
+    at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:571:36)
+    at afterResolve (node:internal/modules/esm/loader:624:52)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:630:12)
+    at onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:649:32)
+    at TracingChannel.tracePromise (node:diagnostics_channel:350:14)
+
+Node.js v24.12.0
+[nodemon] app crashed - waiting for file changes before starting...

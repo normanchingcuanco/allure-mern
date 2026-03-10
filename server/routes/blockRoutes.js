@@ -1,12 +1,16 @@
 import express from "express"
-import { blockUser, getBlockedUsers, unblockUser } from "../controllers/blockController.js"
+import {
+  blockUser,
+  unblockUser,
+  getBlockedUsers
+} from "../controllers/blockController.js"
 
 const router = express.Router()
 
 router.post("/", blockUser)
 
-router.get("/:userId", getBlockedUsers)
+router.delete("/", unblockUser)
 
-router.delete("/:blockId", unblockUser)
+router.get("/:userId", getBlockedUsers)
 
 export default router

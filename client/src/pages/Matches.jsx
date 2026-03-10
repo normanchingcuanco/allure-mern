@@ -21,20 +21,7 @@ export default function Matches() {
 
         const res = await api.get(`/matches/${userId}`)
 
-        const formatted = (res.data || []).map(match => {
-
-          const otherUser = match.users.find(
-            user => user._id !== userId
-          )
-
-          return {
-            matchId: match._id,
-            user: otherUser
-          }
-
-        })
-
-        setMatches(formatted)
+        setMatches(res.data || [])
 
       } catch (err) {
 
@@ -76,6 +63,12 @@ export default function Matches() {
           <div>
 
             <h3>{match.user?.email}</h3>
+
+            {match.lastMessage && (
+              <p style={{ color: "#666", marginTop: "5px" }}>
+                {match.lastMessage}
+              </p>
+            )}
 
           </div>
 

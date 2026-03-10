@@ -3,9 +3,9 @@ import Block from "../models/Block.js"
 export const blockUser = async (req, res) => {
   try {
 
-    const { blockerId, blockedUserId } = req.body
+    const { blockerId, blockedId } = req.body
 
-    if (blockerId === blockedUserId) {
+    if (blockerId === blockedId) {
       return res.status(400).json({
         message: "You cannot block yourself"
       })
@@ -13,7 +13,7 @@ export const blockUser = async (req, res) => {
 
     const existingBlock = await Block.findOne({
       blockerId,
-      blockedUserId
+      blockedId
     })
 
     if (existingBlock) {
@@ -24,7 +24,7 @@ export const blockUser = async (req, res) => {
 
     const block = new Block({
       blockerId,
-      blockedUserId
+      blockedId
     })
 
     await block.save()
@@ -36,9 +36,10 @@ export const blockUser = async (req, res) => {
 
   } catch (error) {
 
+    console.error(error)
+
     res.status(500).json({
-      message: "Server error",
-      error
+      message: "Server error"
     })
 
   }
@@ -52,27 +53,31 @@ export const getBlockedUsers = async (req, res) => {
 
     const blockedUsers = await Block.find({
       blockerId: userId
-    }).populate("blockedUserId", "email")
+    }).populate("blockedId", "email")
 
     res.json(blockedUsers)
 
   } catch (error) {
 
+    console.error(error)
+
     res.status(500).json({
-      message: "Server error",
-      error
+      message: "Server error"
     })
 
   }
 }
 
+
 export const unblockUser = async (req, res) => {
   try {
 
-    const { blockId } = req.params
-    const { userId } = req.body
+    const { blockerId, blockedId } = req.body
 
-    const block = await Block.findById(blockId)
+    const block = await Block.findOneAndDelete({
+      blockerId,
+      blockedId
+    })
 
     if (!block) {
       return res.status(404).json({
@@ -80,23 +85,16 @@ export const unblockUser = async (req, res) => {
       })
     }
 
-    if (block.blockerId.toString() !== userId) {
-      return res.status(403).json({
-        message: "You are not allowed to remove this block"
-      })
-    }
-
-    await Block.findByIdAndDelete(blockId)
-
     res.json({
       message: "User unblocked successfully"
     })
 
   } catch (error) {
 
+    console.error(error)
+
     res.status(500).json({
-      message: "Server error",
-      error
+      message: "Server error"
     })
 
   }

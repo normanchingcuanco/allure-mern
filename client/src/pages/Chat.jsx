@@ -31,18 +31,12 @@ export default function Chat() {
         const res = await api.get(`/matches/${userId}`)
 
         const match = res.data.find(
-          m => m._id.toString() === matchId
+          m => m.matchId === matchId
         )
 
         if (!match) return
 
-        const otherUser = match.users.find(
-          u => u._id.toString() !== userId
-        )
-
-        if (otherUser) {
-          setReceiverId(otherUser._id)
-        }
+        setReceiverId(match.user._id)
 
       } catch (err) {
         console.error("Fetch match error:", err)
