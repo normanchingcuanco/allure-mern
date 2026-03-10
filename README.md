@@ -135,7 +135,7 @@ This positions the platform as:
 | Like System | Users can like other profiles | Express interest | Enable match creation | ✅ Implemented |
 | Incoming Likes | Users can see who liked their profile and choose to like back | Enable supply-side interaction review | Allow supply users to accept or ignore demand | ✅ Implemented |
 | Favorite Profiles | Users bookmark profiles | Save interesting profiles | Encourage return engagement | ⚠️ Partial (basic UI implemented) |
-| Message Requests | Users send messages before matching | Enable direct interaction | Increase conversation opportunities | ✅ Implemented |
+| Message Requests | Users send messages before matching | Enable direct interaction | Increase conversation opportunities | ⚠️ Partial (backend logic present, limited UI integration) |
 
 ---
 
@@ -146,7 +146,8 @@ This positions the platform as:
 |------|------|------|------|------|
 | Match Creation | Mutual likes generate a match | Create mutual connections | Unlock messaging | ✅ Implemented |
 | Match List | Users view their matches | Track interactions | Encourage continued engagement | ✅ Implemented |
-| Match Inbox | Match list displays latest message and interaction summary | Improve messaging workflow | Provide conversation entry point | ⚠️ Partial (UI basic) |
+| Match Inbox | Match list displays latest message and interaction summary | Improve messaging workflow | Provide conversation entry point | ⚠️ Partial (basic UI without last message aggregation) |
+| Unmatch | Users can remove existing matches | Give users control over interactions | Allow users to end unwanted matches | ✅ Implemented |
 
 ---
 
@@ -158,6 +159,7 @@ This positions the platform as:
 | Direct Messaging | Matched users can chat | Enable communication | Support relationship development | ✅ Implemented |
 | Conversation History | Messages persist in chat threads | Maintain conversation context | Improve user experience | ✅ Implemented |
 | Messaging Permission Enforcement | Only matched users can send messages | Prevent spam and abuse | Maintain interaction boundaries | ✅ Implemented |
+| Delete Message | Users can delete their own messages | Allow correction and control over conversations | Improve messaging experience | ✅ Implemented |
 
 ---
 
@@ -166,11 +168,11 @@ This positions the platform as:
 
 | Feature Name | Description | Objective | Purpose | Build Status |
 |------|------|------|------|------|
-| Block Users | Users can block unwanted interactions | Protect user experience | Improve platform safety | ✅ Implemented |
-| Unblock Users | Users can remove previously blocked users | Allow users to reverse blocking decisions | Restore interaction permissions | ✅ Implemented |
-| User Reporting | Users can report suspicious accounts | Enable moderation | Reduce scams and abuse | ✅ Implemented |
-| Profile Verification Badge | Verified users receive badges | Build trust | Increase platform credibility | ⚠️ Partial (backend only) |
-| Interaction Abuse Prevention | Prevent repeated like/unlike spam | Protect platform integrity | Maintain fair user interaction | ✅ Implemented |
+| Block Users | Users can block unwanted interactions | Protect user experience | Improve platform safety | ⬜ Not Built |
+| Unblock Users | Users can remove previously blocked users | Allow users to reverse blocking decisions | Restore interaction permissions | ⬜ Not Built |
+| User Reporting | Users can report suspicious accounts | Enable moderation | Reduce scams and abuse | ⬜ Not Built |
+| Profile Verification Badge | Verified users receive badges | Build trust | Increase platform credibility | ⬜ Not Built |
+| Interaction Abuse Prevention | Prevent repeated like/unlike spam | Protect platform integrity | Maintain fair user interaction | ⚠️ Partial (rate limiting implemented) |
 
 ---
 
@@ -212,9 +214,9 @@ This positions the platform as:
 
 | Feature Name | Description | Objective | Purpose | Build Status |
 |------|------|------|------|------|
-| Report Review System | Admin can review reported users | Maintain platform safety | Remove abusive users | ✅ Implemented |
-| User Suspension | Admin can temporarily suspend accounts | Enforce platform rules | Prevent misuse | ✅ Implemented |
-| User Deletion | Admin can permanently remove users | Maintain platform integrity | Protect community | ✅ Implemented |
+| Report Review System | Admin can review reported users | Maintain platform safety | Remove abusive users | ⬜ Not Built |
+| User Suspension | Admin can temporarily suspend accounts | Enforce platform rules | Prevent misuse | ⬜ Not Built |
+| User Deletion | Admin can permanently remove users | Maintain platform integrity | Protect community | ⬜ Not Built |
 
 ---
 

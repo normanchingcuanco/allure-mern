@@ -12,17 +12,37 @@ import {
 
 const router = express.Router()
 
-router.post("/", createProfile)
-router.get("/", getProfiles)
-router.get("/:id", getProfileById)
-router.patch("/:id", updateProfile)
-router.get("/user/:userId", getMyProfile)
+/* ================================
+   PROFILE DISCOVERY
+================================ */
+
 router.get("/discover/:userId", discoverProfiles)
 
-/* Profile Verification */
+/* ================================
+   PROFILE ROUTES
+================================ */
+
+router.post("/", createProfile)
+router.get("/", getProfiles)
+router.get("/user/:userId", getMyProfile)
+
+/* ================================
+   PROFILE MANAGEMENT
+================================ */
+
+router.patch("/:id", updateProfile)
+router.get("/:id", getProfileById)
+
+/* ================================
+   PROFILE VERIFICATION
+================================ */
+
 router.patch("/verify/:id", verifyProfile)
 
-/* Delete Account */
+/* ================================
+   DELETE ACCOUNT
+================================ */
+
 router.delete("/account/:userId", deleteAccount)
 
 export default router

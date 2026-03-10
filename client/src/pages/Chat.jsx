@@ -9,104 +9,131 @@ export default function Chat() {
   const { matchId } = useParams()
 
   const [messages, setMessages] = useState([])
+  const [receiverId, setReceiverId] = useState(null)
   const [text, setText] = useState("")
 
   useEffect(() => {
 
     const fetchMessages = async () => {
-
       try {
 
         const res = await api.get(`/messages/${matchId}`)
         setMessages(res.data || [])
 
       } catch (err) {
-        console.error(err)
+        console.error("Fetch messages error:", err)
       }
+    }
 
+    const fetchMatch = async () => {
+      try {
+
+        const res = await api.get(`/matches/${userId}`)
+
+        const match = res.data.find(
+          m => m._id.toString() === matchId
+        )
+
+        if (!match) return
+
+        const otherUser = match.users.find(
+          u => u._id.toString() !== userId
+        )
+
+        if (otherUser) {
+          setReceiverId(otherUser._id)
+        }
+
+      } catch (err) {
+        console.error("Fetch match error:", err)
+      }
     }
 
     fetchMessages()
+    fetchMatch()
 
     const interval = setInterval(fetchMessages, 3000)
 
     return () => clearInterval(interval)
 
-  }, [matchId])
+  }, [matchId, userId])
 
   const sendMessage = async () => {
 
-    if (!text.trim()) return
+    if (!text.trim() || !receiverId) return
 
     try {
 
-      const receiverId =
-        messages.length > 0
-          ? (messages[0].senderId === userId
-              ? messages[0].receiverId
-              : messages[0].senderId)
-          : null
-
-      await api.post("/messages", {
+      const res = await api.post("/messages", {
         matchId,
         senderId: userId,
         receiverId,
         text
       })
 
-      setMessages([...messages, { text, senderId: userId }])
+      setMessages(prev => [...prev, res.data.data])
+
       setText("")
 
     } catch (err) {
-      console.error(err)
+      console.error("Send message error:", err)
     }
 
   }
 
   return (
-    <div>
+    <div style={{ padding: "20px" }}>
 
       <h1>Chat</h1>
 
-      {messages.map((msg) => {
+      <div style={{ marginBottom: "20px" }}>
+        {messages.map((msg) => {
 
-        const isMe = msg.senderId === userId
+          const sender =
+            typeof msg.senderId === "object"
+              ? msg.senderId._id
+              : msg.senderId
 
-        return (
-          <div
-            key={msg._id || msg.text}
-            style={{
-              display: "flex",
-              justifyContent: isMe ? "flex-end" : "flex-start",
-              margin: "10px"
-            }}
-          >
+          const isMe = sender?.toString() === userId
 
+          return (
             <div
+              key={msg._id || msg.text}
               style={{
-                background: isMe ? "#DCF8C6" : "#eee",
-                padding: "10px",
-                borderRadius: "10px",
-                maxWidth: "60%"
+                display: "flex",
+                justifyContent: isMe ? "flex-end" : "flex-start",
+                margin: "10px 0"
               }}
             >
-              <p style={{ margin: 0 }}>{msg.text}</p>
+
+              <div
+                style={{
+                  background: isMe ? "#DCF8C6" : "#eee",
+                  padding: "10px",
+                  borderRadius: "10px",
+                  maxWidth: "60%"
+                }}
+              >
+                <p style={{ margin: 0 }}>{msg.text}</p>
+              </div>
+
             </div>
+          )
+        })}
+      </div>
 
-          </div>
-        )
+      <div style={{ display: "flex", gap: "10px" }}>
+        <input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Type message"
+          style={{ flex: 1, padding: "10px" }}
+        />
 
-      })}
-
-      <input
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder="Type message"
-      />
-
-      <button onClick={sendMessage}>
-        Send
-      </button>
+        <button onClick={sendMessage}>
+          Send
+        </button>
+      </div>
 
     </div>
   )

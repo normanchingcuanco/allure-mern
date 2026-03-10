@@ -10,6 +10,7 @@ export default function Discover() {
 
   const [profiles, setProfiles] = useState([])
   const [mode, setMode] = useState("")
+  const [loading, setLoading] = useState(true)
 
   const navigate = useNavigate()
 
@@ -30,7 +31,11 @@ export default function Discover() {
         }
 
       } catch (err) {
-        console.error(err)
+
+        console.error("Discover fetch error:", err)
+
+      } finally {
+        setLoading(false)
       }
 
     }
@@ -51,7 +56,7 @@ export default function Discover() {
       alert("Like sent")
 
     } catch (err) {
-      console.error(err)
+      console.error("Like error:", err)
     }
 
   }
@@ -68,69 +73,97 @@ export default function Discover() {
       alert("Profile added to favorites")
 
     } catch (err) {
-      console.error(err)
+      console.error("Favorite error:", err)
     }
 
+  }
+
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <div style={{ padding: "20px" }}>
+          <h2>Loading profiles...</h2>
+        </div>
+      </>
+    )
   }
 
   return (
     <>
       <Navbar />
 
-      <div>
+      <div style={{ padding: "20px" }}>
 
         <h1>Discover</h1>
 
         <p>Mode: {mode}</p>
 
-        {profiles.length === 0 && <p>No profiles available</p>}
+        {profiles.length === 0 && (
+          <p>No profiles available</p>
+        )}
 
-        {profiles.map((profile) => (
+        {profiles.map((profile) => {
 
-          <div
-            key={profile._id}
-            onClick={() => navigate(`/profile/${profile.userId._id}`)}
-            style={{
-              border: "1px solid #ccc",
-              margin: "10px",
-              padding: "10px",
-              cursor: "pointer"
-            }}
-          >
+          if (!profile.userId) return null
 
-            {profile.photos && profile.photos.length > 0 && (
-              <img
-                src={profile.photos[0]}
-                alt={profile.name}
-                style={{ width: "200px", borderRadius: "10px" }}
-              />
-            )}
+          return (
 
-            <h3>{profile.name}</h3>
-            <p>Age: {profile.age}</p>
-            <p>{profile.bio}</p>
-
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                handleLike(profile.userId._id)
+            <div
+              key={profile._id}
+              onClick={() => navigate(`/profile/${profile.userId._id}`)}
+              style={{
+                border: "1px solid #ccc",
+                margin: "10px",
+                padding: "10px",
+                borderRadius: "10px",
+                cursor: "pointer",
+                maxWidth: "300px"
               }}
             >
-              Like
-            </button>
 
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                handleFavorite(profile._id)
-              }}
-            >
-              Favorite
-            </button>
+              {profile.photos && profile.photos.length > 0 && (
+                <img
+                  src={profile.photos[0]}
+                  alt={profile.name}
+                  style={{
+                    width: "100%",
+                    borderRadius: "10px"
+                  }}
+                />
+              )}
 
-          </div>
+              <h3>{profile.name}</h3>
+              <p>Age: {profile.age}</p>
+              <p>{profile.bio}</p>
 
-        ))}
+              <div style={{ display: "flex", gap: "10px" }}>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleLike(profile.userId._id)
+                  }}
+                >
+                  Like
+                </button>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleFavorite(profile._id)
+                  }}
+                >
+                  Favorite
+                </button>
+
+              </div>
+
+            </div>
+
+          )
+
+        })}
 
       </div>
     </>

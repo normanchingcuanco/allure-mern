@@ -10,7 +10,16 @@ export const sendLike = async (req, res) => {
       return res.status(400).json({ message: "You cannot like yourself" })
     }
 
-    // RATE LIMIT: max 30 likes per hour
+    /* Prevent duplicate like */
+
+    const existingLike = await Like.findOne({ senderId, receiverId })
+
+    if (existingLike) {
+      return res.status(400).json({ message: "Already liked this user" })
+    }
+
+    /* Rate limit: 30 likes/hour */
+
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
 
     const recentLikes = await Like.countDocuments({
@@ -24,20 +33,13 @@ export const sendLike = async (req, res) => {
       })
     }
 
-    const existingLike = await Like.findOne({ senderId, receiverId })
+    /* Save like */
 
-    if (existingLike) {
-      return res.status(400).json({ message: "Already liked this user" })
-    }
-
-    const like = new Like({
-      senderId,
-      receiverId
-    })
-
+    const like = new Like({ senderId, receiverId })
     await like.save()
 
-    // CHECK IF RECEIVER ALREADY LIKED SENDER
+    /* Check reciprocal like */
+
     const reverseLike = await Like.findOne({
       senderId: receiverId,
       receiverId: senderId
@@ -60,13 +62,11 @@ export const sendLike = async (req, res) => {
         await match.save()
 
       } else {
-
         match = existingMatch
-
       }
     }
 
-    res.status(201).json({
+    return res.status(201).json({
       message: match ? "It's a match!" : "Like sent",
       like,
       match
@@ -74,14 +74,14 @@ export const sendLike = async (req, res) => {
 
   } catch (error) {
 
+    console.error(error)
+
     res.status(500).json({
-      message: "Server error",
-      error
+      message: "Server error"
     })
 
   }
 }
-
 
 export const getLikes = async (req, res) => {
   try {
@@ -93,13 +93,11 @@ export const getLikes = async (req, res) => {
   } catch (error) {
 
     res.status(500).json({
-      message: "Server error",
-      error
+      message: "Server error"
     })
 
   }
 }
-
 
 export const getReceivedLikes = async (req, res) => {
   try {
@@ -115,8 +113,7 @@ export const getReceivedLikes = async (req, res) => {
   } catch (error) {
 
     res.status(500).json({
-      message: "Server error",
-      error
+      message: "Server error"
     })
 
   }
@@ -127,13 +124,42 @@ export const getIncomingLikes = async (req, res) => {
 
     const { userId } = req.params
 
-    const likes = await Like.find({ receiverId: userId })
-      .populate("senderId", "email")
+    const likes = await Like.find({
+      receiverId: userId
+    }).populate("senderId", "email")
 
     res.json(likes)
 
   } catch (error) {
+
     console.error(error)
-    res.status(500).json({ message: "Failed to fetch incoming likes" })
+
+    res.status(500).json({
+      message: "Failed to fetch incoming likes"
+    })
+
+  }
+}
+
+export const unlike = async (req, res) => {
+  try {
+
+    const { senderId, receiverId } = req.body
+
+    await Like.findOneAndDelete({
+      senderId,
+      receiverId
+    })
+
+    res.json({
+      message: "Like removed"
+    })
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: "Server error"
+    })
+
   }
 }

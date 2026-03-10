@@ -15,13 +15,31 @@ export default function Matches() {
 
     const fetchMatches = async () => {
 
+      if (!userId) return
+
       try {
 
         const res = await api.get(`/matches/${userId}`)
-        setMatches(res.data || [])
+
+        const formatted = (res.data || []).map(match => {
+
+          const otherUser = match.users.find(
+            user => user._id !== userId
+          )
+
+          return {
+            matchId: match._id,
+            user: otherUser
+          }
+
+        })
+
+        setMatches(formatted)
 
       } catch (err) {
-        console.error(err)
+
+        console.error("Matches fetch error:", err)
+
       }
 
     }
@@ -55,23 +73,9 @@ export default function Matches() {
           }}
         >
 
-          {match.user.profile?.photos?.[0] && (
-            <img
-              src={match.user.profile.photos[0]}
-              alt="profile"
-              width="60"
-              height="60"
-              style={{ borderRadius: "50%", objectFit: "cover" }}
-            />
-          )}
-
           <div>
 
-            <h3>{match.user.profile?.name || match.user.email}</h3>
-
-            {match.lastMessage && (
-              <p>{match.lastMessage}</p>
-            )}
+            <h3>{match.user?.email}</h3>
 
           </div>
 

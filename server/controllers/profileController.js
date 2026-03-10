@@ -104,7 +104,8 @@ export const discoverProfiles = async (req, res) => {
       return res.status(404).json({ message: "User not found" })
     }
 
-    // Female users see incoming likes
+    /* Female users see incoming likes */
+
     if (currentUser.gender === "female") {
 
       const likes = await Like.find({ receiverId: userId })
@@ -119,7 +120,7 @@ export const discoverProfiles = async (req, res) => {
       })
     }
 
-    /* DEMAND LOGIC: male users browse profiles */
+    /* Male users browse profiles */
 
     const likes = await Like.find({ senderId: userId })
     const likedUserIds = likes.map(like => like.receiverId)

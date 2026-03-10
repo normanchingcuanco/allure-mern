@@ -1,6 +1,7 @@
 import Match from "../models/Match.js"
 import Message from "../models/Message.js"
 
+
 export const getUserMatches = async (req, res) => {
   try {
 
@@ -37,6 +38,52 @@ export const getUserMatches = async (req, res) => {
     res.status(500).json({
       message: "Server error",
       error
+    })
+
+  }
+}
+
+export const getMatches = async (req, res) => {
+  try {
+
+    const { userId } = req.params
+
+    const matches = await Match.find({
+      users: userId
+    }).populate("users", "email gender")
+
+    res.json(matches)
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: "Server error"
+    })
+
+  }
+}
+
+export const unmatch = async (req, res) => {
+  try {
+
+    const { matchId } = req.params
+
+    const match = await Match.findByIdAndDelete(matchId)
+
+    if (!match) {
+      return res.status(404).json({
+        message: "Match not found"
+      })
+    }
+
+    res.json({
+      message: "Match removed"
+    })
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: "Server error"
     })
 
   }
