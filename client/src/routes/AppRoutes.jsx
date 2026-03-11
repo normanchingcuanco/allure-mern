@@ -16,18 +16,11 @@ import IncomingLikes from "../pages/IncomingLikes"
 import ProtectedRoute from "../components/ProtectedRoute"
 
 export default function AppRoutes() {
-
   return (
     <BrowserRouter>
-
       <Routes>
-
-        {/* Public routes */}
-
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
-
-        {/* Protected routes */}
 
         <Route
           path="/discover"
@@ -92,12 +85,33 @@ export default function AppRoutes() {
           }
         />
 
-        <Route path="/message-requests" element={<MessageRequests />} />
-        <Route path="/favorites" element={<Favorites />} />
-        <Route path="/incoming-likes" element={<IncomingLikes />} />
+        <Route
+          path="/message-requests"
+          element={
+            <ProtectedRoute>
+              <MessageRequests />
+            </ProtectedRoute>
+          }
+        />
 
+        <Route
+          path="/favorites"
+          element={
+            <ProtectedRoute>
+              <Favorites />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/incoming-likes"
+          element={
+            <ProtectedRoute>
+              <IncomingLikes />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
-
     </BrowserRouter>
   )
 }

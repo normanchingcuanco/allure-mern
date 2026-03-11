@@ -2,7 +2,6 @@ import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 
 export default function Navbar() {
-
   const { logout } = useAuth()
   const navigate = useNavigate()
 
@@ -12,8 +11,7 @@ export default function Navbar() {
   }
 
   return (
-    <div style={{marginBottom:"20px"}}>
-
+    <div style={{ marginBottom: "20px" }}>
       <button onClick={() => navigate("/discover")}>
         Discover
       </button>
@@ -26,14 +24,21 @@ export default function Navbar() {
         Matches
       </button>
 
-      <button onClick={handleLogout}>
-        Logout
+      <button onClick={() => navigate("/favorites")}>
+        Favorites
+      </button>
+
+      <button onClick={() => navigate("/message-requests")}>
+        Message Requests
       </button>
 
       <button onClick={() => navigate("/edit-profile")}>
         Edit Profile
       </button>
 
+      <button onClick={handleLogout}>
+        Logout
+      </button>
     </div>
   )
 }

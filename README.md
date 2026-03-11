@@ -122,7 +122,7 @@ This positions the platform as:
 | Discovery Visibility Rules | Prevent showing already liked, blocked, or interacted profiles | Maintain clean discovery experience | Avoid duplicate profile exposure | ✅ Implemented |
 | Demand Discovery Feed | Male users browse female profiles | Enable marketplace demand flow | Allow demand side to explore supply | ✅ Implemented |
 | Profile Detail View | Users open full profile pages | Provide deeper user information | Help users decide on interaction | ✅ Implemented |
-| Search Filters | Users filter profiles by preferences | Improve discovery efficiency | Help users find compatible matches | ✅ Implemented |
+| Search Filters | Users filter profiles by preferences | Improve discovery efficiency | Help users find compatible matches | ⚠️ Partial (basic filtering only) |
 | Supply Discovery Logic | Female users primarily see incoming likes instead of browsing all profiles | Align with marketplace model | Maintain supply–demand balance | ✅ Implemented |
 
 ---
@@ -134,8 +134,8 @@ This positions the platform as:
 |------|------|------|------|------|
 | Like System | Users can like other profiles | Express interest | Enable match creation | ✅ Implemented |
 | Incoming Likes | Users can see who liked their profile and choose to like back | Enable supply-side interaction review | Allow supply users to accept or ignore demand | ✅ Implemented |
-| Favorite Profiles | Users bookmark profiles | Save interesting profiles | Encourage return engagement | ⚠️ Partial (basic UI implemented) |
-| Message Requests | Users send messages before matching | Enable direct interaction | Increase conversation opportunities | ⚠️ Partial (backend logic present, limited UI integration) |
+| Favorite Profiles | Users bookmark profiles | Save interesting profiles | Encourage return engagement | ✅ Implemented |
+| Message Requests | Users send messages before matching | Enable direct interaction | Increase conversation opportunities | ⚠️ Partial (backend implemented, UI limited) |
 
 ---
 
@@ -146,7 +146,7 @@ This positions the platform as:
 |------|------|------|------|------|
 | Match Creation | Mutual likes generate a match | Create mutual connections | Unlock messaging | ✅ Implemented |
 | Match List | Users view their matches | Track interactions | Encourage continued engagement | ✅ Implemented |
-| Match Inbox | Match list displays latest message and interaction summary | Improve messaging workflow | Provide conversation entry point | ⚠️ Partial (basic UI without last message aggregation) |
+| Match Inbox | Match list displays latest message and interaction summary | Improve messaging workflow | Provide conversation entry point | ⚠️ Partial (basic list without message preview) |
 | Unmatch | Users can remove existing matches | Give users control over interactions | Allow users to end unwanted matches | ✅ Implemented |
 
 ---
@@ -170,7 +170,7 @@ This positions the platform as:
 |------|------|------|------|------|
 | Block Users | Users can block unwanted interactions | Protect user experience | Improve platform safety | ✅ Implemented |
 | Unblock Users | Users can remove previously blocked users | Allow users to reverse blocking decisions | Restore interaction permissions | ✅ Implemented |
-| User Reporting | Users can report suspicious accounts | Enable moderation | Reduce scams and abuse | ⬜ Not Built |
+| User Reporting | Users can report suspicious accounts | Enable moderation | Reduce scams and abuse | ⚠️ Partial (backend implemented, UI recently added) |
 | Profile Verification Badge | Verified users receive badges | Build trust | Increase platform credibility | ⚠️ Partial (backend verification implemented) |
 | Interaction Abuse Prevention | Prevent repeated like/unlike spam | Protect platform integrity | Maintain fair user interaction | ⚠️ Partial (rate limiting implemented) |
 

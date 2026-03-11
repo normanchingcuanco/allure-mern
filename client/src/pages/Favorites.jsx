@@ -1,35 +1,84 @@
 import { useEffect, useState } from "react"
-import axios from "axios"
+import { useNavigate } from "react-router-dom"
+import api from "../api/axios"
+import Navbar from "../components/Navbar"
+import { useAuth } from "../context/AuthContext"
 
 export default function Favorites() {
-  const [favorites, setFavorites] = useState([])
+  const { userId } = useAuth()
+  const navigate = useNavigate()
 
-  const userId = localStorage.getItem("userId")
+  const [favorites, setFavorites] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    const fetchFavorites = async () => {
+      if (!userId) return
+
+      try {
+        const res = await api.get(`/favorites/${userId}`)
+        setFavorites(res.data || [])
+      } catch (error) {
+        console.error("Favorites fetch error:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
     fetchFavorites()
-  }, [])
-
-  const fetchFavorites = async () => {
-    const res = await axios.get(
-      `http://localhost:5000/api/favorites/${userId}`
-    )
-
-    setFavorites(res.data)
-  }
+  }, [userId])
 
   return (
-    <div>
-      <h2>Favorite Profiles</h2>
+    <>
+      <Navbar />
 
-      {favorites.length === 0 && <p>No favorites yet</p>}
+      <div style={{ padding: "20px" }}>
+        <h1>Favorites</h1>
 
-      {favorites.map((fav) => (
-        <div key={fav._id} style={{border:"1px solid #ccc", padding:"10px", marginBottom:"10px"}}>
-          <p><strong>{fav.profile?.name}</strong></p>
-          <p>{fav.profile?.bio}</p>
-        </div>
-      ))}
-    </div>
+        {loading && <p>Loading favorites...</p>}
+
+        {!loading && favorites.length === 0 && (
+          <p>No favorites yet</p>
+        )}
+
+        {!loading &&
+          favorites.map((fav) => {
+            const profile = fav.profileId
+
+            if (!profile) return null
+
+            return (
+              <div
+                key={fav._id}
+                onClick={() => navigate(`/profile/${profile.userId}`)}
+                style={{
+                  border: "1px solid #ccc",
+                  padding: "15px",
+                  marginBottom: "12px",
+                  borderRadius: "10px",
+                  cursor: "pointer",
+                  maxWidth: "350px"
+                }}
+              >
+                {profile.photos && profile.photos.length > 0 && (
+                  <img
+                    src={profile.photos[0]}
+                    alt={profile.name}
+                    style={{
+                      width: "100%",
+                      borderRadius: "10px",
+                      marginBottom: "10px"
+                    }}
+                  />
+                )}
+
+                <h3>{profile.name}</h3>
+                <p>Age: {profile.age}</p>
+                <p>{profile.bio}</p>
+              </div>
+            )
+          })}
+      </div>
+    </>
   )
 }

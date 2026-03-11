@@ -34,6 +34,7 @@ app.use("/api/reports", reportRoutes)
 app.use("/api/admin", adminRoutes)
 app.use("/api/message-requests", messageRequestRoutes)
 app.use("/api/blocks", blockRoutes)
+app.use("/reports", reportRoutes)
 
 app.get("/", (req, res) => {
   res.send("Allure API running")
