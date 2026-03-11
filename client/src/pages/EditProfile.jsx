@@ -115,6 +115,22 @@ export default function EditProfile() {
           placeholder="Photo URLs (comma separated)"
         />
 
+        {profile.photos && profile.photos.map((photo, index) => (
+          <div key={index}>
+            <img
+              src={photo}
+              alt="profile"
+              width="150"
+              onError={(e) => (e.target.style.display = "none")}
+              style={{
+                marginTop: "10px",
+                marginRight: "10px",
+                borderRadius: "8px"
+              }}
+            />
+          </div>
+        ))}
+
         <br /><br />
 
         <button type="submit">
