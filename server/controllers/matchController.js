@@ -1,5 +1,7 @@
 import Match from "../models/Match.js"
 import Message from "../models/Message.js"
+import Profile from "../models/Profile.js"
+import mongoose from "mongoose"
 
 
 export const getMatches = async (req, res) => {
@@ -7,27 +9,42 @@ export const getMatches = async (req, res) => {
 
     const { userId } = req.params
 
+    const userObjectId = new mongoose.Types.ObjectId(userId)
+
     const matches = await Match.find({
-      users: userId
-    }).populate("users", "email gender")
+      users: userObjectId
+    })
+    .sort({ updatedAt: -1 })
 
     const results = []
 
     for (const match of matches) {
 
-      const otherUser = match.users.find(
-        user => user._id.toString() !== userId
+      const otherUserId = match.users.find(
+        id => id.toString() !== userId
       )
+
+      const profile = await Profile.findOne({
+        userId: otherUserId
+      })
 
       const lastMessage = await Message.findOne({
         matchId: match._id
       }).sort({ createdAt: -1 })
 
+      const unreadCount = await Message.countDocuments({
+        matchId: match._id,
+        senderId: { $ne: userId },
+        read: false
+      })
+
       results.push({
         matchId: match._id,
-        user: otherUser,
+        name: profile ? profile.name : "Unknown",
+        photo: profile && profile.photos.length ? profile.photos[0] : null,
         lastMessage: lastMessage ? lastMessage.text : null,
-        lastMessageTime: lastMessage ? lastMessage.createdAt : null
+        lastMessageTime: lastMessage ? lastMessage.createdAt : null,
+        unreadCount
       })
 
     }

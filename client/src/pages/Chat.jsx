@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react"
 import { useParams } from "react-router-dom"
 import api from "../api/axios"
 import { useAuth } from "../context/AuthContext"
+import socket from "../socket"
 
 export default function Chat() {
 
@@ -9,8 +10,10 @@ export default function Chat() {
   const { matchId } = useParams()
 
   const [messages, setMessages] = useState([])
-  const [receiverId, setReceiverId] = useState(null)
+  const [receiverName, setReceiverName] = useState("")
+  const [receiverPhoto, setReceiverPhoto] = useState("")
   const [text, setText] = useState("")
+  const [typingUser, setTypingUser] = useState(false)
 
   const bottomRef = useRef(null)
 
@@ -18,10 +21,8 @@ export default function Chat() {
 
     const fetchMessages = async () => {
       try {
-
         const res = await api.get(`/messages/${matchId}`)
         setMessages(res.data || [])
-
       } catch (err) {
         console.error("Fetch messages error:", err)
       }
@@ -38,7 +39,8 @@ export default function Chat() {
 
         if (!match) return
 
-        setReceiverId(match.user._id)
+        setReceiverName(match.name)
+        setReceiverPhoto(match.photo)
 
       } catch (err) {
         console.error("Fetch match error:", err)
@@ -48,11 +50,36 @@ export default function Chat() {
     fetchMessages()
     fetchMatch()
 
-    const interval = setInterval(fetchMessages, 3000)
-
-    return () => clearInterval(interval)
+    socket.emit("join_match", matchId)
 
   }, [matchId, userId])
+
+
+  useEffect(() => {
+
+    socket.on("receive_message", (data) => {
+
+      if (data.matchId === matchId) {
+        setMessages(prev => [...prev, data.message])
+      }
+
+    })
+
+    socket.on("user_typing", () => {
+      setTypingUser(true)
+    })
+
+    socket.on("user_stop_typing", () => {
+      setTypingUser(false)
+    })
+
+    return () => {
+      socket.off("receive_message")
+      socket.off("user_typing")
+      socket.off("user_stop_typing")
+    }
+
+  }, [matchId])
 
 
   useEffect(() => {
@@ -62,18 +89,26 @@ export default function Chat() {
 
   const sendMessage = async () => {
 
-    if (!text.trim() || !receiverId) return
+    if (!text.trim()) return
 
     try {
 
       const res = await api.post("/messages", {
         matchId,
         senderId: userId,
-        receiverId,
         text
       })
 
-      setMessages(prev => [...prev, res.data.data])
+      const message = res.data.data
+
+      setMessages(prev => [...prev, message])
+
+      socket.emit("send_message", {
+        matchId,
+        message
+      })
+
+      socket.emit("stop_typing", { matchId })
 
       setText("")
 
@@ -83,10 +118,22 @@ export default function Chat() {
 
   }
 
+
   return (
     <div style={{ padding: "20px" }}>
 
       <h1>Chat</h1>
+
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
+        {receiverPhoto && (
+          <img
+            src={receiverPhoto}
+            alt={receiverName}
+            style={{ width: "50px", height: "50px", borderRadius: "50%" }}
+          />
+        )}
+        <h2>{receiverName}</h2>
+      </div>
 
       <div
         style={{
@@ -94,7 +141,7 @@ export default function Chat() {
           padding: "10px",
           height: "400px",
           overflowY: "auto",
-          marginBottom: "20px"
+          marginBottom: "10px"
         }}
       >
 
@@ -125,6 +172,7 @@ export default function Chat() {
                   maxWidth: "60%"
                 }}
               >
+
                 <p style={{ margin: 0 }}>{msg.text}</p>
 
                 {msg.createdAt && (
@@ -137,16 +185,32 @@ export default function Chat() {
 
             </div>
           )
+
         })}
 
         <div ref={bottomRef}></div>
 
       </div>
 
+      {typingUser && (
+        <p style={{ fontStyle: "italic", color: "#666" }}>
+          {receiverName} is typing...
+        </p>
+      )}
+
       <div style={{ display: "flex", gap: "10px" }}>
         <input
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value
+            setText(value)
+
+            socket.emit("typing", { matchId })
+
+            if (!value.trim()) {
+              socket.emit("stop_typing", { matchId })
+            }
+          }}
           onKeyDown={(e) => {
             if (e.key === "Enter" && text.trim()) {
               e.preventDefault()

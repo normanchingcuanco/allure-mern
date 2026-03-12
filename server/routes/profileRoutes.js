@@ -25,6 +25,7 @@ router.get("/discover/:userId", discoverProfiles)
 router.post("/", createProfile)
 router.get("/", getProfiles)
 router.get("/user/:userId", getMyProfile)
+router.get("/discover/:userId", discoverProfiles)
 
 /* ================================
    PROFILE MANAGEMENT

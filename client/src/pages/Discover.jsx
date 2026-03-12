@@ -44,22 +44,36 @@ export default function Discover() {
 
   }, [userId])
 
+
   const handleLike = async (receiverId) => {
 
     try {
 
-      await api.post("/likes", {
+      const res = await api.post("/likes", {
         senderId: userId,
         receiverId
       })
 
-      alert("Like sent")
+      if (res.data?.isMatch) {
+
+        setMatchedUser(receiverId)
+        setMatchId(res.data.matchId)
+        setShowMatchModal(true)
+
+      } else {
+
+        alert("Like sent")
+
+      }
 
     } catch (err) {
+
       console.error("Like error:", err)
+
     }
 
   }
+
 
   const handleFavorite = async (profileId) => {
 
@@ -78,6 +92,7 @@ export default function Discover() {
 
   }
 
+
   if (loading) {
     return (
       <>
@@ -88,6 +103,7 @@ export default function Discover() {
       </>
     )
   }
+
 
   return (
     <>
@@ -103,22 +119,19 @@ export default function Discover() {
           <p>No profiles available</p>
         )}
 
-        {profiles.map((profile) => {
+        {profiles.map(profile => {
 
-          if (!profile.userId) return null
+          if (!profile?.userId) return null
 
           return (
-
             <div
               key={profile._id}
-              onClick={() => navigate(`/profile/${profile.userId._id}`)}
               style={{
-                border: "1px solid #ccc",
-                margin: "10px",
-                padding: "10px",
+                border: "1px solid #ddd",
                 borderRadius: "10px",
-                cursor: "pointer",
-                maxWidth: "300px"
+                padding: "15px",
+                marginBottom: "20px",
+                maxWidth: "400px"
               }}
             >
 
@@ -140,19 +153,13 @@ export default function Discover() {
               <div style={{ display: "flex", gap: "10px" }}>
 
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleLike(profile.userId._id)
-                  }}
+                  onClick={() => handleLike(profile.userId._id)}
                 >
                   Like
                 </button>
 
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleFavorite(profile._id)
-                  }}
+                  onClick={() => handleFavorite(profile._id)}
                 >
                   Favorite
                 </button>
@@ -160,7 +167,6 @@ export default function Discover() {
               </div>
 
             </div>
-
           )
 
         })}

@@ -124,7 +124,7 @@ export const discoverProfiles = async (req, res) => {
     /* Male users browse profiles */
 
     const likes = await Like.find({ senderId: userId })
-    const likedUserIds = likes.map(like => like.receiverId)
+    const likedUserIds = likes.map(like => like.receiverId.toString())
 
     /* Get blocked users */
 
@@ -137,14 +137,19 @@ export const discoverProfiles = async (req, res) => {
 
     const blockedUserIds = blocks.map(block =>
       block.blockerId.toString() === userId
-        ? block.blockedId
-        : block.blockerId
+        ? block.blockedId.toString()
+        : block.blockerId.toString()
     )
+
+    const excludedIds = [
+      userId.toString(),
+      ...likedUserIds,
+      ...blockedUserIds
+    ]
 
     let filter = {
       userId: {
-        $ne: userId,
-        $nin: [...likedUserIds, ...blockedUserIds]
+        $nin: excludedIds
       }
     }
 
@@ -263,3 +268,4 @@ export const getMyProfile = async (req, res) => {
     res.status(500).json({ message: "Server error" })
   }
 }
+

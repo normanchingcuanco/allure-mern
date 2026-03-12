@@ -2,6 +2,8 @@ import express from "express"
 import mongoose from "mongoose"
 import cors from "cors"
 import dotenv from "dotenv"
+import { createServer } from "http"
+import { Server } from "socket.io"
 
 import authRoutes from "./routes/authRoutes.js"
 import profileRoutes from "./routes/profileRoutes.js"
@@ -14,11 +16,16 @@ import reportRoutes from "./routes/reportRoutes.js"
 import adminRoutes from "./routes/adminRoutes.js"
 import messageRequestRoutes from "./routes/messageRequestRoutes.js"
 
-
-
 dotenv.config()
 
 const app = express()
+const httpServer = createServer(app)
+
+const io = new Server(httpServer, {
+  cors: {
+    origin: "*"
+  }
+})
 
 app.use(cors())
 app.use(express.json())
@@ -33,11 +40,33 @@ app.use("/api/blocks", blockRoutes)
 app.use("/api/reports", reportRoutes)
 app.use("/api/admin", adminRoutes)
 app.use("/api/message-requests", messageRequestRoutes)
-app.use("/api/blocks", blockRoutes)
-app.use("/reports", reportRoutes)
 
 app.get("/", (req, res) => {
   res.send("Allure API running")
+})
+
+io.on("connection", (socket) => {
+
+  socket.on("join_match", (matchId) => {
+    socket.join(matchId)
+  })
+
+  socket.on("send_message", (data) => {
+    io.to(data.matchId).emit("receive_message", data)
+  })
+
+  socket.on("typing", (data) => {
+    socket.to(data.matchId).emit("user_typing", data)
+  })
+
+  socket.on("stop_typing", (data) => {
+    socket.to(data.matchId).emit("user_stop_typing", data)
+  })
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected")
+  })
+
 })
 
 const PORT = process.env.PORT || 5000
@@ -46,7 +75,8 @@ mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
     console.log("MongoDB Connected")
-    app.listen(PORT, () => {
+
+    httpServer.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`)
     })
   })

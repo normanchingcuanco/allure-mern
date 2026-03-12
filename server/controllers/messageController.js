@@ -4,41 +4,45 @@ import Match from "../models/Match.js"
 export const sendMessage = async (req, res) => {
   try {
 
-    const { matchId, senderId, receiverId, text } = req.body
+    const { matchId, senderId, text } = req.body
 
-    if (!text || !text.trim()) {
-      return res.status(400).json({ message: "Message text required" })
+    if (!matchId || !senderId || !text) {
+      return res.status(400).json({
+        message: "Missing required fields"
+      })
     }
 
     const match = await Match.findById(matchId)
 
     if (!match) {
-      return res.status(404).json({ message: "Match not found" })
-    }
-
-    const users = match.users.map(u => u.toString())
-
-    const isParticipant =
-      users.includes(senderId) &&
-      users.includes(receiverId)
-
-    if (!isParticipant) {
-      return res.status(403).json({
-        message: "Users are not part of this match"
+      return res.status(404).json({
+        message: "Match not found"
       })
     }
 
-    const message = new Message({
+    if (!match.users.includes(senderId)) {
+      return res.status(403).json({
+        message: "Not authorized for this match"
+      })
+    }
+
+    const receiverId = match.users.find(
+      user => user.toString() !== senderId
+    )
+
+    const message = await Message.create({
       matchId,
       senderId,
       receiverId,
       text
     })
 
-    await message.save()
+    await Match.findByIdAndUpdate(matchId, {
+      updatedAt: new Date()
+    })
 
-    res.status(201).json({
-      message: "Message sent",
+    res.json({
+      success: true,
       data: message
     })
 
@@ -57,13 +61,19 @@ export const getMessages = async (req, res) => {
   try {
 
     const { matchId } = req.params
+    const page = parseInt(req.query.page) || 1
+    const limit = parseInt(req.query.limit) || 20
 
-    const messages = await Message
-      .find({ matchId })
-      .populate("senderId", "email")
-      .sort({ createdAt: 1 })
+    const skip = (page - 1) * limit
 
-    res.json(messages)
+    const messages = await Message.find({
+      matchId
+    })
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+
+    res.json(messages.reverse())
 
   } catch (error) {
 
@@ -94,6 +104,41 @@ export const deleteMessage = async (req, res) => {
     })
 
   } catch (error) {
+
+    res.status(500).json({
+      message: "Server error"
+    })
+
+  }
+}
+
+export const markMessagesAsRead = async (req, res) => {
+  try {
+
+    const { matchId, userId } = req.body
+
+    const matchObjectId = new mongoose.Types.ObjectId(matchId)
+    const userObjectId = new mongoose.Types.ObjectId(userId)
+
+    const result = await Message.updateMany(
+      {
+        matchId: matchObjectId,
+        senderId: { $ne: userObjectId },
+        read: false
+      },
+      {
+        $set: { read: true }
+      }
+    )
+
+    res.json({
+      success: true,
+      messagesMarkedRead: result.modifiedCount
+    })
+
+  } catch (error) {
+
+    console.error(error)
 
     res.status(500).json({
       message: "Server error"
