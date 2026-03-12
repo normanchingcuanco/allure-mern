@@ -10,17 +10,22 @@ export default function Matches() {
   const navigate = useNavigate()
 
   const fetchMatches = async () => {
+
+    if (!userId) return
+
     try {
 
       const res = await api.get(`/matches/${userId}`)
-      setMatches(res.data)
+      setMatches(res.data || [])
 
     } catch (error) {
       console.error(error)
     }
+
   }
 
   const unmatch = async (matchId) => {
+
     try {
 
       await api.delete(`/matches/${matchId}`)
@@ -32,11 +37,13 @@ export default function Matches() {
     } catch (error) {
       console.error(error)
     }
+
   }
 
   useEffect(() => {
     fetchMatches()
-  }, [])
+  }, [userId])
+
 
   return (
     <>
@@ -61,7 +68,7 @@ export default function Matches() {
         >
 
           <p>
-            <strong>{match.user?.email}</strong>
+            <strong>{match.user?.email || "User"}</strong>
           </p>
 
           {match.lastMessage && (

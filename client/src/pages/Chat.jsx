@@ -50,12 +50,16 @@ export default function Chat() {
     fetchMessages()
     fetchMatch()
 
-    socket.emit("join_match", matchId)
+    if (socket) {
+      socket.emit("join_match", matchId)
+    }
 
   }, [matchId, userId])
 
 
   useEffect(() => {
+
+    if (!socket) return
 
     socket.on("receive_message", (data) => {
 
@@ -103,12 +107,14 @@ export default function Chat() {
 
       setMessages(prev => [...prev, message])
 
-      socket.emit("send_message", {
-        matchId,
-        message
-      })
+      if (socket) {
+        socket.emit("send_message", {
+          matchId,
+          message
+        })
 
-      socket.emit("stop_typing", { matchId })
+        socket.emit("stop_typing", { matchId })
+      }
 
       setText("")
 
@@ -205,10 +211,12 @@ export default function Chat() {
             const value = e.target.value
             setText(value)
 
-            socket.emit("typing", { matchId })
+            if (socket) {
+              socket.emit("typing", { matchId })
 
-            if (!value.trim()) {
-              socket.emit("stop_typing", { matchId })
+              if (!value.trim()) {
+                socket.emit("stop_typing", { matchId })
+              }
             }
           }}
           onKeyDown={(e) => {

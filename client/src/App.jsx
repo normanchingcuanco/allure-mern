@@ -1,55 +1,45 @@
-import { useEffect, useState } from "react"
-import socket from "./socket"
-import { useNavigate } from "react-router-dom"
+import { Routes, Route } from "react-router-dom"
+
+import Login from "./pages/Login"
+import Register from "./pages/Register"
+import Discover from "./pages/Discover"
+import CreateProfile from "./pages/CreateProfile"
+import EditProfile from "./pages/EditProfile"
+import Profile from "./pages/Profile"
+import Favorites from "./pages/Favorites"
+import Likes from "./pages/Likes"
+import IncomingLikes from "./pages/IncomingLikes"
+import Matches from "./pages/Matches"
+import Chat from "./pages/Chat"
+import MessageRequests from "./pages/MessageRequests"
+import BlockedUsers from "./pages/BlockedUsers"
 
 function App() {
 
-  const [notification, setNotification] = useState(null)
-  const navigate = useNavigate()
-
-  useEffect(() => {
-
-    socket.on("receive_message", (data) => {
-
-      setNotification({
-        matchId: data.matchId,
-        message: data.message
-      })
-
-      setTimeout(() => {
-        setNotification(null)
-      }, 5000)
-
-    })
-
-    return () => {
-      socket.off("receive_message")
-    }
-
-  }, [])
-
   return (
-    <>
-      {notification && (
-        <div
-          style={{
-            position: "fixed",
-            bottom: "20px",
-            right: "20px",
-            background: "#333",
-            color: "#fff",
-            padding: "15px",
-            borderRadius: "8px",
-            cursor: "pointer"
-          }}
-          onClick={() => navigate(`/chat/${notification.matchId}`)}
-        >
-          💬 New message received
-        </div>
-      )}
+    <Routes>
 
-      {/* existing routes */}
-    </>
+      <Route path="/" element={<Login />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+
+      <Route path="/discover" element={<Discover />} />
+
+      <Route path="/create-profile" element={<CreateProfile />} />
+      <Route path="/edit-profile" element={<EditProfile />} />
+      <Route path="/profile/:userId" element={<Profile />} />
+
+      <Route path="/favorites" element={<Favorites />} />
+      <Route path="/likes" element={<Likes />} />
+      <Route path="/incoming-likes" element={<IncomingLikes />} />
+
+      <Route path="/matches" element={<Matches />} />
+      <Route path="/chat/:matchId" element={<Chat />} />
+
+      <Route path="/message-requests" element={<MessageRequests />} />
+      <Route path="/blocked-users" element={<BlockedUsers />} />
+
+    </Routes>
   )
 }
 

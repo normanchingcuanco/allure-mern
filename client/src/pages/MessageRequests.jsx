@@ -8,21 +8,27 @@ export default function MessageRequests() {
   const userId = localStorage.getItem("userId")
 
   const fetchRequests = async () => {
+
+    if (!userId) return
+
     try {
 
       const res = await api.get(`/message-requests/incoming/${userId}`)
-      setRequests(res.data)
+      setRequests(res.data || [])
 
     } catch (error) {
       console.error(error)
     }
+
   }
 
   useEffect(() => {
     fetchRequests()
-  }, [])
+  }, [userId])
+
 
   const acceptRequest = async (requestId) => {
+
     try {
 
       await api.patch(`/message-requests/${requestId}/accept`)
@@ -31,9 +37,12 @@ export default function MessageRequests() {
     } catch (error) {
       console.error(error)
     }
+
   }
 
+
   const rejectRequest = async (requestId) => {
+
     try {
 
       await api.patch(`/message-requests/${requestId}/reject`)
@@ -42,7 +51,9 @@ export default function MessageRequests() {
     } catch (error) {
       console.error(error)
     }
+
   }
+
 
   return (
     <>
@@ -55,6 +66,7 @@ export default function MessageRequests() {
       )}
 
       {requests.map((req) => (
+
         <div
           key={req._id}
           style={{
@@ -66,7 +78,7 @@ export default function MessageRequests() {
         >
 
           <p>
-            <strong>From:</strong> {req.sender?.email}
+            <strong>From:</strong> {req.sender?.email || "User"}
           </p>
 
           <p>
@@ -87,7 +99,9 @@ export default function MessageRequests() {
           </button>
 
         </div>
+
       ))}
+
     </>
   )
 }

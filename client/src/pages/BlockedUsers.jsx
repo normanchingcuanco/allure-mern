@@ -9,6 +9,9 @@ export default function BlockedUsers() {
   const [blockedUsers, setBlockedUsers] = useState([])
 
   const fetchBlocked = async () => {
+
+    if (!userId) return
+
     try {
 
       const res = await api.get(`/blocks/${userId}`)
@@ -18,9 +21,11 @@ export default function BlockedUsers() {
     } catch (err) {
       console.error("Fetch blocked users error:", err)
     }
+
   }
 
   const unblock = async (blockId) => {
+
     try {
 
       await api.delete(`/blocks/${blockId}`)
@@ -35,11 +40,12 @@ export default function BlockedUsers() {
       console.error("Unblock error:", err)
       alert("Failed to unblock user")
     }
+
   }
 
   useEffect(() => {
     fetchBlocked()
-  }, [])
+  }, [userId])
 
   return (
     <>

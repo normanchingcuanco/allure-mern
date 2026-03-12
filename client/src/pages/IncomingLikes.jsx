@@ -25,6 +25,7 @@ export default function IncomingLikes() {
 
   }, [userId])
 
+
   const likeBack = async (senderId) => {
 
     try {
@@ -37,7 +38,7 @@ export default function IncomingLikes() {
       alert("Match created")
 
       setLikes(prev =>
-        prev.filter(like => like.sender._id !== senderId)
+        prev.filter(like => like.senderId._id !== senderId)
       )
 
     } catch (err) {
@@ -46,13 +47,14 @@ export default function IncomingLikes() {
 
   }
 
+
   return (
     <>
       <Navbar />
 
       <div>
 
-        <h1>INCOMING LIKES PAGE TEST</h1>
+        <h1>Incoming Likes</h1>
 
         {likes.length === 0 && <p>No likes yet</p>}
 

@@ -55,15 +55,9 @@ export default function Discover() {
       })
 
       if (res.data?.isMatch) {
-
-        setMatchedUser(receiverId)
-        setMatchId(res.data.matchId)
-        setShowMatchModal(true)
-
+        alert("It's a match!")
       } else {
-
         alert("Like sent")
-
       }
 
     } catch (err) {
@@ -126,12 +120,14 @@ export default function Discover() {
           return (
             <div
               key={profile._id}
+              onClick={() => navigate(`/profile/${profile.userId._id}`)}
               style={{
                 border: "1px solid #ddd",
                 borderRadius: "10px",
                 padding: "15px",
                 marginBottom: "20px",
-                maxWidth: "400px"
+                maxWidth: "400px",
+                cursor: "pointer"
               }}
             >
 
@@ -153,13 +149,19 @@ export default function Discover() {
               <div style={{ display: "flex", gap: "10px" }}>
 
                 <button
-                  onClick={() => handleLike(profile.userId._id)}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleLike(profile.userId._id)
+                  }}
                 >
                   Like
                 </button>
 
                 <button
-                  onClick={() => handleFavorite(profile._id)}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleFavorite(profile._id)
+                  }}
                 >
                   Favorite
                 </button>

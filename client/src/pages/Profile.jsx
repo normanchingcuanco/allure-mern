@@ -35,10 +35,9 @@ export default function Profile() {
   }, [userId])
 
 
-
   const sendMessageRequest = async () => {
 
-    if (!message) {
+    if (!message.trim()) {
       alert("Please enter a message")
       return
     }
@@ -48,11 +47,10 @@ export default function Profile() {
       await api.post("/message-requests", {
         senderId: currentUserId,
         receiverId: userId,
-        message
+        message: message.trim()
       })
 
       alert("Message request sent")
-
       setMessage("")
 
     } catch (error) {
@@ -61,7 +59,6 @@ export default function Profile() {
     }
 
   }
-
 
 
   const handleReport = async () => {
@@ -77,7 +74,7 @@ export default function Profile() {
         reporterId: currentUserId,
         reportedUserId: userId,
         reason: reportReason,
-        description: reportDescription
+        description: reportDescription.trim()
       })
 
       alert("Report submitted")
@@ -93,10 +90,9 @@ export default function Profile() {
   }
 
 
-
   const blockUser = async () => {
 
-    if (!confirm("Are you sure you want to block this user?")) return
+    if (!window.confirm("Are you sure you want to block this user?")) return
 
     try {
 
@@ -119,12 +115,23 @@ export default function Profile() {
   }
 
 
-
   if (!profile) {
-    return <p>Loading...</p>
+    return (
+      <>
+        <Navbar />
+        <p>Loading...</p>
+      </>
+    )
   }
 
-
+  if (currentUserId === userId) {
+    return (
+      <>
+        <Navbar />
+        <h2>This is your profile</h2>
+      </>
+    )
+  }
 
   return (
     <>
@@ -150,7 +157,12 @@ export default function Profile() {
       <h3>Photos</h3>
 
       {(profile.photos || []).map((photo, index) => (
-        <img key={index} src={photo} width="200" alt="profile" />
+        <img
+          key={`${photo}-${index}`}
+          src={photo}
+          width="200"
+          alt="profile"
+        />
       ))}
 
       <hr />
@@ -217,4 +229,5 @@ export default function Profile() {
 
     </>
   )
+
 }
