@@ -72,12 +72,9 @@ export const getBlockedUsers = async (req, res) => {
 export const unblockUser = async (req, res) => {
   try {
 
-    const { blockerId, blockedId } = req.body
+    const { blockId } = req.params
 
-    const block = await Block.findOneAndDelete({
-      blockerId,
-      blockedId
-    })
+    const block = await Block.findByIdAndDelete(blockId)
 
     if (!block) {
       return res.status(404).json({

@@ -2,9 +2,9 @@ import express from "express"
 import {
   sendMessageRequest,
   getIncomingRequests,
-  getOutgoingRequests,
   acceptMessageRequest,
-  rejectMessageRequest
+  rejectMessageRequest,
+  getOutgoingRequests
 } from "../controllers/messageRequestController.js"
 
 const router = express.Router()
@@ -15,8 +15,8 @@ router.get("/incoming/:userId", getIncomingRequests)
 
 router.get("/outgoing/:userId", getOutgoingRequests)
 
-router.patch("/accept/:requestId", acceptMessageRequest)
+router.patch("/:requestId/accept", acceptMessageRequest)
 
-router.patch("/reject/:requestId", rejectMessageRequest)
+router.patch("/:requestId/reject", rejectMessageRequest)
 
 export default router

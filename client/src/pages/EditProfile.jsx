@@ -109,13 +109,16 @@ export default function EditProfile() {
           onChange={(e) =>
             setProfile({
               ...profile,
-              photos: e.target.value.split(",")
+              photos: e.target.value
+                .split(",")
+                .map((p) => p.trim())
+                .filter(Boolean)
             })
           }
           placeholder="Photo URLs (comma separated)"
         />
 
-        {profile.photos && profile.photos.map((photo, index) => (
+        {profile.photos?.length > 0 && profile.photos.map((photo, index) => (
           <div key={index}>
             <img
               src={photo}

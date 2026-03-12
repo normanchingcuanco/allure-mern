@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useParams } from "react-router-dom"
 import api from "../api/axios"
 import { useAuth } from "../context/AuthContext"
@@ -11,6 +11,8 @@ export default function Chat() {
   const [messages, setMessages] = useState([])
   const [receiverId, setReceiverId] = useState(null)
   const [text, setText] = useState("")
+
+  const bottomRef = useRef(null)
 
   useEffect(() => {
 
@@ -52,6 +54,12 @@ export default function Chat() {
 
   }, [matchId, userId])
 
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages])
+
+
   const sendMessage = async () => {
 
     if (!text.trim() || !receiverId) return
@@ -80,7 +88,16 @@ export default function Chat() {
 
       <h1>Chat</h1>
 
-      <div style={{ marginBottom: "20px" }}>
+      <div
+        style={{
+          border: "1px solid #ccc",
+          padding: "10px",
+          height: "400px",
+          overflowY: "auto",
+          marginBottom: "20px"
+        }}
+      >
+
         {messages.map((msg) => {
 
           const sender =
@@ -109,17 +126,33 @@ export default function Chat() {
                 }}
               >
                 <p style={{ margin: 0 }}>{msg.text}</p>
+
+                {msg.createdAt && (
+                  <small style={{ fontSize: "10px" }}>
+                    {new Date(msg.createdAt).toLocaleTimeString()}
+                  </small>
+                )}
+
               </div>
 
             </div>
           )
         })}
+
+        <div ref={bottomRef}></div>
+
       </div>
 
       <div style={{ display: "flex", gap: "10px" }}>
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && text.trim()) {
+              e.preventDefault()
+              sendMessage()
+            }
+          }}
           placeholder="Type message"
           style={{ flex: 1, padding: "10px" }}
         />

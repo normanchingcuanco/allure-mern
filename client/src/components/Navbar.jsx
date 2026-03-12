@@ -39,6 +39,10 @@ export default function Navbar() {
       <button onClick={handleLogout}>
         Logout
       </button>
+
+      <button onClick={() => navigate("/blocked-users")}>
+        Blocked Users
+      </button>
     </div>
   )
 }

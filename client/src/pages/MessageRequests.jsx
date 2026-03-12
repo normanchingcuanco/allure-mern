@@ -1,59 +1,93 @@
 import { useEffect, useState } from "react"
-import axios from "axios"
+import api from "../api/axios"
+import Navbar from "../components/Navbar"
 
 export default function MessageRequests() {
-  const [requests, setRequests] = useState([])
 
+  const [requests, setRequests] = useState([])
   const userId = localStorage.getItem("userId")
+
+  const fetchRequests = async () => {
+    try {
+
+      const res = await api.get(`/message-requests/incoming/${userId}`)
+      setRequests(res.data)
+
+    } catch (error) {
+      console.error(error)
+    }
+  }
 
   useEffect(() => {
     fetchRequests()
   }, [])
 
-  const fetchRequests = async () => {
-    const res = await axios.get(
-      `http://localhost:5000/api/message-requests/incoming/${userId}`
-    )
+  const acceptRequest = async (requestId) => {
+    try {
 
-    setRequests(res.data)
+      await api.patch(`/message-requests/${requestId}/accept`)
+      fetchRequests()
+
+    } catch (error) {
+      console.error(error)
+    }
   }
 
-  const acceptRequest = async (id) => {
-    await axios.patch(
-      `http://localhost:5000/api/message-requests/accept/${id}`
-    )
+  const rejectRequest = async (requestId) => {
+    try {
 
-    setRequests(requests.filter(r => r._id !== id))
-  }
+      await api.patch(`/message-requests/${requestId}/reject`)
+      fetchRequests()
 
-  const rejectRequest = async (id) => {
-    await axios.patch(
-      `http://localhost:5000/api/message-requests/reject/${id}`
-    )
-
-    setRequests(requests.filter(r => r._id !== id))
+    } catch (error) {
+      console.error(error)
+    }
   }
 
   return (
-    <div>
-      <h2>Message Requests</h2>
+    <>
+      <Navbar />
 
-      {requests.length === 0 && <p>No message requests</p>}
+      <h1>Message Requests</h1>
 
-      {requests.map((request) => (
-        <div key={request._id} style={{border:"1px solid #ccc", padding:"10px", marginBottom:"10px"}}>
-          <p><strong>From:</strong> {request.sender?.email}</p>
-          <p>{request.message}</p>
+      {requests.length === 0 && (
+        <p>No incoming requests</p>
+      )}
 
-          <button onClick={() => acceptRequest(request._id)}>
+      {requests.map((req) => (
+        <div
+          key={req._id}
+          style={{
+            border: "1px solid #ccc",
+            padding: "15px",
+            marginBottom: "15px",
+            borderRadius: "10px"
+          }}
+        >
+
+          <p>
+            <strong>From:</strong> {req.sender?.email}
+          </p>
+
+          <p>
+            <strong>Message:</strong> {req.message}
+          </p>
+
+          <button
+            onClick={() => acceptRequest(req._id)}
+            style={{ marginRight: "10px" }}
+          >
             Accept
           </button>
 
-          <button onClick={() => rejectRequest(request._id)}>
+          <button
+            onClick={() => rejectRequest(req._id)}
+          >
             Reject
           </button>
+
         </div>
       ))}
-    </div>
+    </>
   )
 }

@@ -1,76 +1,87 @@
 import { useEffect, useState } from "react"
-import api from "../api/axios"
-import { useAuth } from "../context/AuthContext"
-import Navbar from "../components/Navbar"
 import { useNavigate } from "react-router-dom"
+import api from "../api/axios"
+import Navbar from "../components/Navbar"
 
 export default function Matches() {
 
-  const { userId } = useAuth()
+  const [matches, setMatches] = useState([])
+  const userId = localStorage.getItem("userId")
   const navigate = useNavigate()
 
-  const [matches, setMatches] = useState([])
+  const fetchMatches = async () => {
+    try {
+
+      const res = await api.get(`/matches/${userId}`)
+      setMatches(res.data)
+
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  const unmatch = async (matchId) => {
+    try {
+
+      await api.delete(`/matches/${matchId}`)
+
+      setMatches(prev =>
+        prev.filter(match => match.matchId !== matchId)
+      )
+
+    } catch (error) {
+      console.error(error)
+    }
+  }
 
   useEffect(() => {
-
-    const fetchMatches = async () => {
-
-      if (!userId) return
-
-      try {
-
-        const res = await api.get(`/matches/${userId}`)
-
-        setMatches(res.data || [])
-
-      } catch (err) {
-
-        console.error("Matches fetch error:", err)
-
-      }
-
-    }
-
     fetchMatches()
-
-  }, [userId])
+  }, [])
 
   return (
     <>
       <Navbar />
 
-      <h1>Matches</h1>
+      <h1>Your Matches</h1>
 
-      {matches.length === 0 && <p>No matches yet</p>}
+      {matches.length === 0 && (
+        <p>No matches yet</p>
+      )}
 
       {matches.map((match) => (
 
         <div
           key={match.matchId}
-          onClick={() => navigate(`/chat/${match.matchId}`)}
           style={{
-            border: "1px solid #ddd",
+            border: "1px solid #ccc",
             padding: "15px",
-            margin: "10px",
-            borderRadius: "10px",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "15px"
+            marginBottom: "15px",
+            borderRadius: "10px"
           }}
         >
 
-          <div>
+          <p>
+            <strong>{match.user?.email}</strong>
+          </p>
 
-            <h3>{match.user?.email}</h3>
+          {match.lastMessage && (
+            <p>
+              Last message: {match.lastMessage}
+            </p>
+          )}
 
-            {match.lastMessage && (
-              <p style={{ color: "#666", marginTop: "5px" }}>
-                {match.lastMessage}
-              </p>
-            )}
+          <button
+            onClick={() => navigate(`/chat/${match.matchId}`)}
+            style={{ marginRight: "10px" }}
+          >
+            Open Chat
+          </button>
 
-          </div>
+          <button
+            onClick={() => unmatch(match.matchId)}
+          >
+            Unmatch
+          </button>
 
         </div>
 

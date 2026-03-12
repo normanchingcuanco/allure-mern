@@ -12,6 +12,7 @@ import EditProfile from "../pages/EditProfile"
 import MessageRequests from "../pages/MessageRequests"
 import Favorites from "../pages/Favorites"
 import IncomingLikes from "../pages/IncomingLikes"
+import BlockedUsers from "../pages/BlockedUsers"
 
 import ProtectedRoute from "../components/ProtectedRoute"
 
@@ -108,6 +109,15 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <IncomingLikes />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/blocked-users"
+          element={
+            <ProtectedRoute>
+              <BlockedUsers />
             </ProtectedRoute>
           }
         />

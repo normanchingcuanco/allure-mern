@@ -10,6 +10,8 @@ export default function Profile() {
   const [profile, setProfile] = useState(null)
   const [reportReason, setReportReason] = useState("")
   const [reportDescription, setReportDescription] = useState("")
+  const [message, setMessage] = useState("")
+  const [blocking, setBlocking] = useState(false)
 
   const currentUserId = localStorage.getItem("userId")
 
@@ -31,6 +33,36 @@ export default function Profile() {
     fetchProfile()
 
   }, [userId])
+
+
+
+  const sendMessageRequest = async () => {
+
+    if (!message) {
+      alert("Please enter a message")
+      return
+    }
+
+    try {
+
+      await api.post("/message-requests", {
+        senderId: currentUserId,
+        receiverId: userId,
+        message
+      })
+
+      alert("Message request sent")
+
+      setMessage("")
+
+    } catch (error) {
+      console.error(error)
+      alert("Failed to send message request")
+    }
+
+  }
+
+
 
   const handleReport = async () => {
 
@@ -60,9 +92,39 @@ export default function Profile() {
 
   }
 
+
+
+  const blockUser = async () => {
+
+    if (!confirm("Are you sure you want to block this user?")) return
+
+    try {
+
+      setBlocking(true)
+
+      await api.post("/blocks", {
+        blockerId: currentUserId,
+        blockedId: userId
+      })
+
+      alert("User blocked")
+
+    } catch (error) {
+      console.error(error)
+      alert("Failed to block user")
+    } finally {
+      setBlocking(false)
+    }
+
+  }
+
+
+
   if (!profile) {
     return <p>Loading...</p>
   }
+
+
 
   return (
     <>
@@ -93,6 +155,22 @@ export default function Profile() {
 
       <hr />
 
+      <h3>Send Message Request</h3>
+
+      <textarea
+        placeholder="Write your message..."
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+      />
+
+      <br /><br />
+
+      <button onClick={sendMessageRequest}>
+        Send Message Request
+      </button>
+
+      <hr />
+
       <h3>Report User</h3>
 
       <select
@@ -118,6 +196,23 @@ export default function Profile() {
 
       <button onClick={handleReport}>
         Submit Report
+      </button>
+
+      <hr />
+
+      <h3>Safety</h3>
+
+      <button
+        onClick={blockUser}
+        disabled={blocking}
+        style={{
+          background: "#ff4d4f",
+          color: "white",
+          padding: "10px",
+          borderRadius: "6px"
+        }}
+      >
+        Block User
       </button>
 
     </>
