@@ -119,10 +119,10 @@ This positions the platform as:
 | Feature Name | Description | Objective | Purpose | Build Status |
 |------|------|------|------|------|
 | Browse Profiles | Users view other profiles through discovery feed | Enable matchmaking discovery | Allow demand users to explore supply profiles | ✅ Implemented |
-| Discovery Visibility Rules | Prevent showing already liked, blocked, or interacted profiles | Maintain clean discovery experience | Avoid duplicate profile exposure | ⚠️ Partial (blocked-user filtering pending) |
+| Discovery Visibility Rules | Prevent showing already liked, blocked, matched, or self profiles | Maintain clean discovery experience | Avoid duplicate profile exposure | ✅ Implemented |
 | Demand Discovery Feed | Male users browse female profiles | Enable marketplace demand flow | Allow demand side to explore supply | ✅ Implemented |
 | Profile Detail View | Users open full profile pages | Provide deeper user information | Help users decide on interaction | ✅ Implemented |
-| Search Filters | Users filter profiles by preferences | Improve discovery efficiency | Help users find compatible matches | ⚠️ Partial (basic filtering only) |
+| Search Filters | Users filter profiles by preferences | Improve discovery efficiency | Help users find compatible matches | ⚠️ Partial (basic filtering implemented) |
 | Supply Discovery Logic | Female users primarily see incoming likes instead of browsing all profiles | Align with marketplace model | Maintain supply–demand balance | ✅ Implemented |
 
 ---
@@ -133,9 +133,10 @@ This positions the platform as:
 | Feature Name | Description | Objective | Purpose | Build Status |
 |------|------|------|------|------|
 | Like System | Users can like other profiles | Express interest | Enable match creation | ✅ Implemented |
+| Duplicate Like Prevention | Prevent repeated likes to the same user | Maintain platform integrity | Avoid interaction abuse | ✅ Implemented |
 | Incoming Likes | Users can see who liked their profile and choose to like back | Enable supply-side interaction review | Allow supply users to accept or ignore demand | ✅ Implemented |
 | Favorite Profiles | Users bookmark profiles | Save interesting profiles | Encourage return engagement | ✅ Implemented |
-| Message Requests | Users send messages before matching | Enable direct interaction | Increase conversation opportunities | ⚠️ Partial (backend implemented, basic UI implemented) |
+| Message Requests | Users send messages before matching | Enable direct interaction | Increase conversation opportunities | ⚠️ Partial (backend + UI basic support) |
 
 ---
 
@@ -146,8 +147,9 @@ This positions the platform as:
 |------|------|------|------|------|
 | Match Creation | Mutual likes generate a match | Create mutual connections | Unlock messaging | ✅ Implemented |
 | Match List | Users view their matches | Track interactions | Encourage continued engagement | ✅ Implemented |
-| Match Inbox | Match list displays latest message and interaction summary | Improve messaging workflow | Provide conversation entry point | ⚠️ Partial (basic list without message preview aggregation) |
+| Match Inbox | Match list displays latest message, timestamp, and unread counts | Improve messaging workflow | Provide conversation entry point | ✅ Implemented |
 | Unmatch | Users can remove existing matches | Give users control over interactions | Allow users to end unwanted matches | ✅ Implemented |
+| Chat Cleanup on Unmatch | Delete all messages when a match is removed | Maintain privacy and data consistency | Prevent chat history leaks | ✅ Implemented |
 
 ---
 
@@ -159,7 +161,9 @@ This positions the platform as:
 | Direct Messaging | Matched users can chat | Enable communication | Support relationship development | ✅ Implemented |
 | Conversation History | Messages persist in chat threads | Maintain conversation context | Improve user experience | ✅ Implemented |
 | Messaging Permission Enforcement | Only matched users can send messages | Prevent spam and abuse | Maintain interaction boundaries | ✅ Implemented |
+| Unread Message Count | Track unread messages per match | Improve chat visibility | Encourage user re-engagement | ✅ Implemented |
 | Delete Message | Users can delete their own messages | Allow correction and control over conversations | Improve messaging experience | ✅ Implemented |
+| Messaging Rate Limiting | Limit number of messages sent per second | Prevent spam and abuse | Protect messaging infrastructure | ✅ Implemented |
 
 ---
 
@@ -170,9 +174,10 @@ This positions the platform as:
 |------|------|------|------|------|
 | Block Users | Users can block unwanted interactions | Protect user experience | Improve platform safety | ✅ Implemented |
 | Unblock Users | Users can remove previously blocked users | Allow users to reverse blocking decisions | Restore interaction permissions | ✅ Implemented |
+| Block Enforcement | Blocked users cannot appear in discovery or interact | Maintain safety boundaries | Prevent unwanted contact | ✅ Implemented |
 | User Reporting | Users can report suspicious accounts | Enable moderation | Reduce scams and abuse | ⚠️ Partial (backend + UI implemented, admin moderation pending) |
 | Profile Verification Badge | Verified users receive badges | Build trust | Increase platform credibility | ⚠️ Partial (backend verification implemented) |
-| Interaction Abuse Prevention | Prevent repeated like/unlike spam | Protect platform integrity | Maintain fair user interaction | ⚠️ Partial (rate limiting implemented) |
+| Interaction Abuse Prevention | Prevent repeated likes or messaging spam | Protect platform integrity | Maintain fair user interaction | ✅ Implemented |
 
 ---
 
