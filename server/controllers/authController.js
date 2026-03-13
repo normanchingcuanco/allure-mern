@@ -10,7 +10,13 @@ export const registerUser = async (req, res) => {
 
     const { email, password } = req.body
 
-    const existingUser = await User.findOne({ email })
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" })
+    }
+
+    const normalizedEmail = email.toLowerCase().trim()
+
+    const existingUser = await User.findOne({ email: normalizedEmail })
 
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" })
@@ -21,17 +27,18 @@ export const registerUser = async (req, res) => {
     const verificationToken = crypto.randomBytes(32).toString("hex")
 
     const newUser = new User({
-      email,
+      email: normalizedEmail,
       password: hashedPassword,
       emailVerificationToken: verificationToken,
-      emailVerificationExpires: Date.now() + 3600000 // 1 hour
+      emailVerificationExpires: Date.now() + 3600000
     })
 
     await newUser.save()
 
     res.status(201).json({
       message: "User registered successfully",
-      verificationToken // temporary so frontend can test verification
+      userId: newUser._id,
+      verificationToken
     })
 
   } catch (error) {
@@ -51,7 +58,9 @@ export const loginUser = async (req, res) => {
 
     const { email, password } = req.body
 
-    const user = await User.findOne({ email })
+    const normalizedEmail = email.toLowerCase().trim()
+
+    const user = await User.findOne({ email: normalizedEmail })
 
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" })
@@ -70,14 +79,19 @@ export const loginUser = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user._id },
+      {
+        id: user._id,
+        email: user.email,
+        role: user.role
+      },
       process.env.JWT_SECRET || "secret",
       { expiresIn: "7d" }
     )
 
     res.json({
       token,
-      userId: user._id
+      userId: user._id,
+      email: user.email
     })
 
   } catch (error) {

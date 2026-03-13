@@ -94,7 +94,7 @@ This positions the platform as:
 |------|------|------|------|------|
 | User Registration | Allow users to create accounts using email and password | Enable user onboarding | Entry point to the platform | ✅ Implemented |
 | Login System | Users authenticate and access their accounts | Secure user sessions | Allow returning users to access the platform | ✅ Implemented |
-| Email Verification | Users verify their email after signup | Prevent fake accounts | Improve platform trust and security | ⬜ Not Built |
+| Email Verification | Users verify their email after signup | Prevent fake accounts | Improve platform trust and security | ✅ Implemented |
 | Identity Verification | Users submit ID and photo verification | Confirm real identities | Support trust and safety in international dating | ⬜ Not Built |
 
 ---
@@ -105,11 +105,11 @@ This positions the platform as:
 | Feature Name | Description | Objective | Purpose | Build Status |
 |------|------|------|------|------|
 | Profile Setup | Users complete profile with bio and preferences | Enable identity representation | Allow users to present themselves | ✅ Implemented |
-| Profile Photo Upload | Users upload profile photos | Improve engagement | Provide visual representation | ⚠️ Partial (URL-based photos) |
+| Profile Photo Upload | Users upload profile photos | Improve engagement | Provide visual representation | ⚠️ Partial (URL-based photos only) |
 | Interests & Lifestyle Fields | Users add hobbies and lifestyle preferences | Improve compatibility | Enable smarter match discovery | ✅ Implemented |
 | Relationship Goals Field | Users specify dating intentions | Clarify expectations | Encourage intentional dating | ✅ Implemented |
 | Edit Profile | Users can update their profile details | Maintain profile accuracy | Improve user experience | ✅ Implemented |
-| Update Photos | Users can replace or add profile photos | Improve profile presentation | Encourage profile freshness | ⚠️ Partial (URL editing only) |
+| Update Photos | Users can replace or add profile photos | Improve profile presentation | Encourage profile freshness | ⚠️ Partial (manual URL editing only) |
 
 ---
 
@@ -176,7 +176,7 @@ This positions the platform as:
 | Unblock Users | Users can remove previously blocked users | Allow users to reverse blocking decisions | Restore interaction permissions | ✅ Implemented |
 | Block Enforcement | Blocked users cannot appear in discovery or interact | Maintain safety boundaries | Prevent unwanted contact | ✅ Implemented |
 | User Reporting | Users can report suspicious accounts | Enable moderation | Reduce scams and abuse | ⚠️ Partial (backend + UI implemented, admin moderation pending) |
-| Profile Verification Badge | Verified users receive badges | Build trust | Increase platform credibility | ⚠️ Partial (backend verification implemented) |
+| Profile Verification Badge | Verified users receive badges | Build trust | Increase platform credibility | ⚠️ Partial (email verification implemented, identity verification pending) |
 | Interaction Abuse Prevention | Prevent repeated likes or messaging spam | Protect platform integrity | Maintain fair user interaction | ✅ Implemented |
 
 ---
