@@ -105,11 +105,11 @@ This positions the platform as:
 | Feature Name | Description | Objective | Purpose | Build Status |
 |------|------|------|------|------|
 | Profile Setup | Users complete profile with bio and preferences | Enable identity representation | Allow users to present themselves | ✅ Implemented |
-| Profile Photo Upload | Users upload profile photos | Improve engagement | Provide visual representation | ⚠️ Partial (URL-based photos only) |
+| Profile Photo Upload | Users upload profile photos | Improve engagement | Provide visual representation | ✅ Implemented |
 | Interests & Lifestyle Fields | Users add hobbies and lifestyle preferences | Improve compatibility | Enable smarter match discovery | ✅ Implemented |
 | Relationship Goals Field | Users specify dating intentions | Clarify expectations | Encourage intentional dating | ✅ Implemented |
 | Edit Profile | Users can update their profile details | Maintain profile accuracy | Improve user experience | ✅ Implemented |
-| Update Photos | Users can replace or add profile photos | Improve profile presentation | Encourage profile freshness | ⚠️ Partial (manual URL editing only) |
+| Update Photos | Users can replace or add profile photos | Improve profile presentation | Encourage profile freshness | ✅ Implemented |
 
 ---
 

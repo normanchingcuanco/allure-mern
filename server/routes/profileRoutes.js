@@ -9,6 +9,7 @@ import {
   deleteAccount,
   getMyProfile
 } from "../controllers/profileController.js"
+import upload from "../middleware/upload.js"
 
 const router = express.Router()
 
@@ -19,19 +20,43 @@ const router = express.Router()
 router.get("/discover/:userId", discoverProfiles)
 
 /* ================================
+   PROFILE UPLOAD
+================================ */
+
+router.post("/upload", upload.single("image"), (req, res) => {
+  try {
+
+    if (!req.file) {
+      return res.status(400).json({ message: "No image uploaded" })
+    }
+
+    res.json({
+      imageUrl: req.file.path
+    })
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: "Upload failed",
+      error
+    })
+
+  }
+})
+
+/* ================================
    PROFILE ROUTES
 ================================ */
 
 router.post("/", createProfile)
 router.get("/", getProfiles)
 router.get("/user/:userId", getMyProfile)
-router.get("/discover/:userId", discoverProfiles)
 
 /* ================================
    PROFILE MANAGEMENT
 ================================ */
 
-router.patch("/:id", updateProfile)
+router.put("/:id", updateProfile)
 router.get("/:id", getProfileById)
 
 /* ================================
