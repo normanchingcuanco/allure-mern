@@ -1,36 +1,54 @@
 import { useEffect, useState, useRef } from "react"
-import { useParams } from "react-router-dom"
+import { useParams, useNavigate } from "react-router-dom"
 import api from "../api/axios"
 import { useAuth } from "../context/AuthContext"
 import socket from "../socket"
 
 export default function Chat() {
-
   const { userId } = useAuth()
   const { matchId } = useParams()
+  const navigate = useNavigate()
 
   const [messages, setMessages] = useState([])
   const [receiverName, setReceiverName] = useState("")
   const [receiverPhoto, setReceiverPhoto] = useState("")
   const [text, setText] = useState("")
   const [typingUser, setTypingUser] = useState(false)
+  const [error, setError] = useState("")
 
   const bottomRef = useRef(null)
 
   useEffect(() => {
-
     const fetchMessages = async () => {
       try {
-        const res = await api.get(`/messages/${matchId}`)
+        setError("")
+
+        const res = await api.get(`/messages/${matchId}`, {
+          params: { userId }
+        })
+
         setMessages(res.data || [])
       } catch (err) {
         console.error("Fetch messages error:", err)
+
+        if (err.response?.status === 403) {
+          setError("You are not authorized to view this chat.")
+          setMessages([])
+          return
+        }
+
+        if (err.response?.status === 404) {
+          setError("Chat not found.")
+          setMessages([])
+          return
+        }
+
+        setError("Failed to load messages.")
       }
     }
 
     const fetchMatch = async () => {
       try {
-
         const res = await api.get(`/matches/${userId}`)
 
         const match = res.data.find(
@@ -41,11 +59,12 @@ export default function Chat() {
 
         setReceiverName(match.name)
         setReceiverPhoto(match.photo)
-
       } catch (err) {
         console.error("Fetch match error:", err)
       }
     }
+
+    if (!userId || !matchId) return
 
     fetchMessages()
     fetchMatch()
@@ -53,20 +72,15 @@ export default function Chat() {
     if (socket) {
       socket.emit("join_match", matchId)
     }
-
   }, [matchId, userId])
 
-
   useEffect(() => {
-
     if (!socket) return
 
     socket.on("receive_message", (data) => {
-
       if (data.matchId === matchId) {
         setMessages(prev => [...prev, data.message])
       }
-
     })
 
     socket.on("user_typing", () => {
@@ -82,20 +96,17 @@ export default function Chat() {
       socket.off("user_typing")
       socket.off("user_stop_typing")
     }
-
   }, [matchId])
-
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-
   const sendMessage = async () => {
-
     if (!text.trim()) return
 
     try {
+      setError("")
 
       const res = await api.post("/messages", {
         matchId,
@@ -117,17 +128,37 @@ export default function Chat() {
       }
 
       setText("")
-
     } catch (err) {
       console.error("Send message error:", err)
-    }
 
+      if (err.response?.status === 403) {
+        setError("You are not authorized to send messages in this chat.")
+        return
+      }
+
+      if (err.response?.status === 404) {
+        setError("Chat not found.")
+        return
+      }
+
+      setError("Failed to send message.")
+    }
   }
 
+  if (error && messages.length === 0) {
+    return (
+      <div style={{ padding: "20px" }}>
+        <h1>Chat</h1>
+        <p>{error}</p>
+        <button onClick={() => navigate("/matches")}>
+          Back to Matches
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div style={{ padding: "20px" }}>
-
       <h1>Chat</h1>
 
       <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
@@ -141,6 +172,10 @@ export default function Chat() {
         <h2>{receiverName}</h2>
       </div>
 
+      {error && (
+        <p style={{ color: "red" }}>{error}</p>
+      )}
+
       <div
         style={{
           border: "1px solid #ccc",
@@ -150,9 +185,7 @@ export default function Chat() {
           marginBottom: "10px"
         }}
       >
-
         {messages.map((msg) => {
-
           const sender =
             typeof msg.senderId === "object"
               ? msg.senderId._id
@@ -169,7 +202,6 @@ export default function Chat() {
                 margin: "10px 0"
               }}
             >
-
               <div
                 style={{
                   background: isMe ? "#DCF8C6" : "#eee",
@@ -178,7 +210,6 @@ export default function Chat() {
                   maxWidth: "60%"
                 }}
               >
-
                 <p style={{ margin: 0 }}>{msg.text}</p>
 
                 {msg.createdAt && (
@@ -186,16 +217,12 @@ export default function Chat() {
                     {new Date(msg.createdAt).toLocaleTimeString()}
                   </small>
                 )}
-
               </div>
-
             </div>
           )
-
         })}
 
         <div ref={bottomRef}></div>
-
       </div>
 
       {typingUser && (
@@ -233,7 +260,6 @@ export default function Chat() {
           Send
         </button>
       </div>
-
     </div>
   )
 }
