@@ -94,7 +94,7 @@ This positions the platform as:
 |------|------|------|------|------|
 | User Registration | Allow users to create accounts using email and password | Enable user onboarding | Entry point to the platform | ✅ Implemented |
 | Login System | Users authenticate and access their accounts | Secure user sessions | Allow returning users to access the platform | ✅ Implemented |
-| Email Verification | Users verify their email after signup | Prevent fake accounts | Improve platform trust and security | ✅ Implemented |
+| Email Verification | Users verify their email after signup | Prevent fake accounts | Improve platform trust and security | ⚠️ Partial (verification gating exists, but full email verification flow not complete) |
 | Identity Verification | Users submit ID and photo verification | Confirm real identities | Support trust and safety in international dating | ⬜ Not Built |
 
 ---
@@ -105,11 +105,11 @@ This positions the platform as:
 | Feature Name | Description | Objective | Purpose | Build Status |
 |------|------|------|------|------|
 | Profile Setup | Users complete profile with bio and preferences | Enable identity representation | Allow users to present themselves | ✅ Implemented |
-| Profile Photo Upload | Users upload profile photos | Improve engagement | Provide visual representation | ✅ Implemented |
+| Profile Photo Upload | Users upload profile photos | Improve engagement | Provide visual representation | ⚠️ Partial (photo URLs only) |
 | Interests & Lifestyle Fields | Users add hobbies and lifestyle preferences | Improve compatibility | Enable smarter match discovery | ✅ Implemented |
 | Relationship Goals Field | Users specify dating intentions | Clarify expectations | Encourage intentional dating | ✅ Implemented |
 | Edit Profile | Users can update their profile details | Maintain profile accuracy | Improve user experience | ✅ Implemented |
-| Update Photos | Users can replace or add profile photos | Improve profile presentation | Encourage profile freshness | ✅ Implemented |
+| Update Photos | Users can replace or add profile photos | Improve profile presentation | Encourage profile freshness | ⚠️ Partial (URL-based only) |
 
 ---
 
@@ -122,7 +122,7 @@ This positions the platform as:
 | Discovery Visibility Rules | Prevent showing already liked, blocked, matched, or self profiles | Maintain clean discovery experience | Avoid duplicate profile exposure | ✅ Implemented |
 | Demand Discovery Feed | Male users browse female profiles | Enable marketplace demand flow | Allow demand side to explore supply | ✅ Implemented |
 | Profile Detail View | Users open full profile pages | Provide deeper user information | Help users decide on interaction | ✅ Implemented |
-| Search Filters | Users filter profiles by preferences | Improve discovery efficiency | Help users find compatible matches | ⚠️ Partial (basic filtering implemented) |
+| Search Filters | Users filter profiles by preferences | Improve discovery efficiency | Help users find compatible matches | ✅ Implemented |
 | Supply Discovery Logic | Female users primarily see incoming likes instead of browsing all profiles | Align with marketplace model | Maintain supply–demand balance | ✅ Implemented |
 
 ---
@@ -134,9 +134,11 @@ This positions the platform as:
 |------|------|------|------|------|
 | Like System | Users can like other profiles | Express interest | Enable match creation | ✅ Implemented |
 | Duplicate Like Prevention | Prevent repeated likes to the same user | Maintain platform integrity | Avoid interaction abuse | ✅ Implemented |
-| Incoming Likes | Users can see who liked their profile and choose to like back | Enable supply-side interaction review | Allow supply users to accept or ignore demand | ✅ Implemented |
+| Incoming Likes | Users can see who liked their profile | Enable supply-side interaction review | Allow supply users to review interest | ✅ Implemented |
+| Like Back Action | Users can like back directly from incoming likes | Complete mutual interest flow | Allow supply users to convert likes into matches | ✅ Implemented |
 | Favorite Profiles | Users bookmark profiles | Save interesting profiles | Encourage return engagement | ✅ Implemented |
-| Message Requests | Users send messages before matching | Enable direct interaction | Increase conversation opportunities | ⚠️ Partial (backend + UI basic support) |
+| Favorite Toggle | Users can favorite and unfavorite from Discover | Improve saved-profile control | Let users manage bookmarks without leaving discovery | ✅ Implemented |
+| Message Requests | Users send messages before matching | Enable direct interaction | Increase conversation opportunities | ⚠️ Partial |
 
 ---
 
@@ -147,7 +149,7 @@ This positions the platform as:
 |------|------|------|------|------|
 | Match Creation | Mutual likes generate a match | Create mutual connections | Unlock messaging | ✅ Implemented |
 | Match List | Users view their matches | Track interactions | Encourage continued engagement | ✅ Implemented |
-| Match Inbox | Match list displays latest message, timestamp, and unread counts | Improve messaging workflow | Provide conversation entry point | ✅ Implemented |
+| Match Inbox | Match list displays latest message, timestamp, and unread counts | Improve messaging workflow | Provide conversation entry point | ⚠️ Partial |
 | Unmatch | Users can remove existing matches | Give users control over interactions | Allow users to end unwanted matches | ✅ Implemented |
 | Chat Cleanup on Unmatch | Delete all messages when a match is removed | Maintain privacy and data consistency | Prevent chat history leaks | ✅ Implemented |
 
@@ -161,9 +163,10 @@ This positions the platform as:
 | Direct Messaging | Matched users can chat | Enable communication | Support relationship development | ✅ Implemented |
 | Conversation History | Messages persist in chat threads | Maintain conversation context | Improve user experience | ✅ Implemented |
 | Messaging Permission Enforcement | Only matched users can send messages | Prevent spam and abuse | Maintain interaction boundaries | ✅ Implemented |
-| Unread Message Count | Track unread messages per match | Improve chat visibility | Encourage user re-engagement | ✅ Implemented |
+| Chat Access Control | Only match participants can view chats | Prevent unauthorized access | Protect private conversations | ✅ Implemented |
+| Unread Message Count | Track unread messages per match | Improve chat visibility | Encourage user re-engagement | ⚠️ Partial |
 | Delete Message | Users can delete their own messages | Allow correction and control over conversations | Improve messaging experience | ✅ Implemented |
-| Messaging Rate Limiting | Limit number of messages sent per second | Prevent spam and abuse | Protect messaging infrastructure | ✅ Implemented |
+| Messaging Rate Limiting | Limit number of messages sent per second | Prevent spam and abuse | Protect messaging infrastructure | ⚠️ Needs Validation |
 
 ---
 
@@ -175,8 +178,8 @@ This positions the platform as:
 | Block Users | Users can block unwanted interactions | Protect user experience | Improve platform safety | ✅ Implemented |
 | Unblock Users | Users can remove previously blocked users | Allow users to reverse blocking decisions | Restore interaction permissions | ✅ Implemented |
 | Block Enforcement | Blocked users cannot appear in discovery or interact | Maintain safety boundaries | Prevent unwanted contact | ✅ Implemented |
-| User Reporting | Users can report suspicious accounts | Enable moderation | Reduce scams and abuse | ⚠️ Partial (backend + UI implemented, admin moderation pending) |
-| Profile Verification Badge | Verified users receive badges | Build trust | Increase platform credibility | ⚠️ Partial (email verification implemented, identity verification pending) |
+| User Reporting | Users can report suspicious accounts | Enable moderation | Reduce scams and abuse | ⚠️ Partial |
+| Profile Verification Badge | Verified users receive badges | Build trust | Increase platform credibility | ⚠️ Partial |
 | Interaction Abuse Prevention | Prevent repeated likes or messaging spam | Protect platform integrity | Maintain fair user interaction | ✅ Implemented |
 
 ---
