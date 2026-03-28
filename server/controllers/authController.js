@@ -141,3 +141,49 @@ export const verifyEmail = async (req, res) => {
 
   }
 }
+
+
+
+// ================= NEW: RESEND VERIFICATION =================
+export const resendVerification = async (req, res) => {
+  try {
+
+    const { email } = req.body
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" })
+    }
+
+    const normalizedEmail = email.toLowerCase().trim()
+
+    const user = await User.findOne({ email: normalizedEmail })
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" })
+    }
+
+    if (user.isEmailVerified) {
+      return res.status(400).json({ message: "Email already verified" })
+    }
+
+    const newToken = crypto.randomBytes(32).toString("hex")
+
+    user.emailVerificationToken = newToken
+    user.emailVerificationExpires = Date.now() + 3600000
+
+    await user.save()
+
+    res.json({
+      message: "Verification token regenerated",
+      verificationToken: newToken
+    })
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: "Server error",
+      error
+    })
+
+  }
+}

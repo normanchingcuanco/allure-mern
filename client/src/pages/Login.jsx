@@ -7,61 +7,82 @@ export default function Login() {
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [resendEmail, setResendEmail] = useState("")
+  const [resendMessage, setResendMessage] = useState("")
 
   const navigate = useNavigate()
   const { login } = useAuth()
 
   const handleLogin = async (e) => {
 
-  e.preventDefault()
+    e.preventDefault()
 
-  try {
-
-    const res = await api.post("/auth/login", {
-      email,
-      password
-    })
-
-    console.log("LOGIN RESPONSE:", res.data)
-
-    const userId =
-      res.data.user?._id ||
-      res.data.user?.id ||
-      res.data.userId ||
-      res.data.id
-
-    const token = res.data.token
-
-    if (!userId || !token) {
-      throw new Error("Invalid login response structure")
-    }
-
-    login(userId, token)
-
-    // CHECK IF PROFILE EXISTS USING DISCOVER ENDPOINT
     try {
 
-      const discoverRes = await api.get(`/profiles/discover/${userId}`)
+      const res = await api.post("/auth/login", {
+        email,
+        password
+      })
 
-      if (discoverRes.data) {
-        navigate("/discover")
+      console.log("LOGIN RESPONSE:", res.data)
+
+      const userId =
+        res.data.user?._id ||
+        res.data.user?.id ||
+        res.data.userId ||
+        res.data.id
+
+      const token = res.data.token
+
+      if (!userId || !token) {
+        throw new Error("Invalid login response structure")
       }
 
-    } catch (error) {
+      login(userId, token)
 
-      // If discover fails, assume no profile exists
-      navigate("/create-profile")
+      try {
+
+        const discoverRes = await api.get(`/profiles/discover/${userId}`)
+
+        if (discoverRes.data) {
+          navigate("/discover")
+        }
+
+      } catch (error) {
+
+        navigate("/create-profile")
+
+      }
+
+    } catch (err) {
+
+      console.error(err)
+      alert("Login failed")
 
     }
-
-  } catch (err) {
-
-    console.error(err)
-    alert("Login failed")
 
   }
 
-}
+  const handleResendVerification = async (e) => {
+    e.preventDefault()
+
+    try {
+
+      const res = await api.post("/auth/resend-verification", {
+        email: resendEmail
+      })
+
+      setResendMessage(res.data.message || `Verification token: ${res.data.verificationToken}`)
+
+    } catch (err) {
+
+      console.error(err)
+      setResendMessage(
+        err.response?.data?.message || "Failed to resend verification"
+      )
+
+    }
+  }
 
   return (
     <div>
@@ -93,6 +114,34 @@ export default function Login() {
         </button>
 
       </form>
+
+      <br /><br />
+
+      <h3>Didn’t receive verification email?</h3>
+
+      <form onSubmit={handleResendVerification}>
+
+        <input
+          type="email"
+          placeholder="Enter your email"
+          value={resendEmail}
+          onChange={(e) => setResendEmail(e.target.value)}
+        />
+
+        <br /><br />
+
+        <button type="submit">
+          Resend Verification
+        </button>
+
+      </form>
+
+      {resendMessage && (
+        <>
+          <br />
+          <p>{resendMessage}</p>
+        </>
+      )}
 
     </div>
   )

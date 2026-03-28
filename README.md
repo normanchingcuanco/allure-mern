@@ -94,7 +94,7 @@ This positions the platform as:
 |------|------|------|------|------|
 | User Registration | Allow users to create accounts using email and password | Enable user onboarding | Entry point to the platform | ✅ Implemented |
 | Login System | Users authenticate and access their accounts | Secure user sessions | Allow returning users to access the platform | ✅ Implemented |
-| Email Verification | Users verify their email after signup | Prevent fake accounts | Improve platform trust and security | ⚠️ Partial |
+| Email Verification | Users verify their email after signup | Prevent fake accounts | Improve platform trust and security | ✅ Implemented |
 | Identity Verification | Users submit ID and photo verification | Confirm real identities | Support trust and safety in international dating | ⬜ Not Built |
 
 ---
@@ -134,8 +134,8 @@ This positions the platform as:
 |------|------|------|------|------|
 | Like System | Users can like other profiles | Express interest | Enable match creation | ✅ Implemented |
 | Duplicate Like Prevention | Prevent repeated likes to the same user | Maintain platform integrity | Avoid interaction abuse | ✅ Implemented |
-| Incoming Likes | Users can see who liked their profile | Enable supply-side interaction review | Allow supply users to review interest | ⚠️ Partial (not clickable yet) |
-| Like Back Action | Users can like back directly from incoming likes | Complete mutual interest flow | Allow supply users to convert likes into matches | ⬜ Not Built |
+| Incoming Likes | Users can see who liked their profile | Enable supply-side interaction review | Allow supply users to review interest | ⚠️ Partial (Discover view limited, full actions in Likes page) |
+| Like Back Action | Users can like back directly from incoming likes | Complete mutual interest flow | Allow supply users to convert likes into matches | ✅ Implemented |
 | Favorite Profiles | Users bookmark profiles | Save interesting profiles | Encourage return engagement | ✅ Implemented |
 | Favorite Toggle | Users can favorite and unfavorite from Discover | Improve saved-profile control | Let users manage bookmarks without leaving discovery | ✅ Implemented |
 | Message Requests | Users send messages before matching | Enable direct interaction | Increase conversation opportunities | ✅ Implemented |
@@ -201,8 +201,8 @@ This positions the platform as:
 | Feature Name | Description | Objective | Purpose | Build Status |
 |------|------|------|------|------|
 | New Match Notification | Notify users when a new match occurs | Improve engagement | Encourage users to start conversations | ⬜ Not Built |
-| Message Notification | Notify users when they receive new messages | Maintain active conversations | Improve responsiveness | ⚠️ Partial (navbar unread + match unread implemented) |
-| Like Notification | Notify users when someone likes their profile | Increase user engagement | Encourage profile interaction | ⚠️ Partial (incoming likes visible but not actionable) |
+| Message Notification | Notify users when they receive new messages | Maintain active conversations | Improve responsiveness | ⚠️ Partial (unread badges implemented) |
+| Like Notification | Notify users when someone likes their profile | Increase user engagement | Encourage profile interaction | ⚠️ Partial (incoming likes functional, UX split across pages) |
 
 ---
 

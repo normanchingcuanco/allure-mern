@@ -1,90 +1,84 @@
-<template>
+import { useEffect, useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
+import api from "../api/axios"
 
-<div class="verify-container">
+export default function VerifyEmail() {
+  const { token } = useParams()
+  const navigate = useNavigate()
 
-<h2>Email Verification</h2>
+  const [loading, setLoading] = useState(true)
+  const [success, setSuccess] = useState(false)
+  const [error, setError] = useState(false)
 
-<p v-if="loading">Verifying your email...</p>
+  useEffect(() => {
+    let redirectTimer
 
-<p v-if="success" class="success">
-Email verified successfully. You can now login.
-</p>
+    const verifyUserEmail = async () => {
+      try {
+        await api.get(`/auth/verify-email/${token}`)
+        setSuccess(true)
 
-<p v-if="error" class="error">
-Verification failed or token expired.
-</p>
+        redirectTimer = setTimeout(() => {
+          navigate("/")
+        }, 3000)
+      } catch (err) {
+        console.error("Email verification failed:", err)
+        setError(true)
+      } finally {
+        setLoading(false)
+      }
+    }
 
-<button v-if="success" @click="goToLogin">
-Go to Login
-</button>
+    if (token) {
+      verifyUserEmail()
+    } else {
+      setError(true)
+      setLoading(false)
+    }
 
-</div>
+    return () => {
+      if (redirectTimer) clearTimeout(redirectTimer)
+    }
+  }, [token, navigate])
 
-</template>
+  return (
+    <div style={styles.container}>
+      <h2>Email Verification</h2>
 
+      {loading && <p>Verifying your email...</p>}
 
-<script>
+      {success && (
+        <>
+          <p style={styles.success}>
+            Email verified successfully. Redirecting to login...
+          </p>
+          <button onClick={() => navigate("/")}>Go to Login Now</button>
+        </>
+      )}
 
-import api from "../api"
-
-export default {
-
-data() {
-return {
-loading: true,
-success: false,
-error: false
-}
-},
-
-async mounted() {
-
-try {
-
-const token = this.$route.params.token
-
-await api.get(`/verify-email/${token}`)
-
-this.success = true
-
-} catch {
-
-this.error = true
-
-}
-
-this.loading = false
-
-},
-
-methods: {
-
-goToLogin() {
-this.$router.push("/login")
-}
-
-}
-
-}
-
-</script>
-
-
-<style>
-
-.verify-container {
-max-width: 500px;
-margin: auto;
-padding: 40px;
-text-align: center;
+      {error && (
+        <>
+          <p style={styles.error}>
+            Verification failed or token expired.
+          </p>
+          <button onClick={() => navigate("/")}>Back to Login</button>
+        </>
+      )}
+    </div>
+  )
 }
 
-.success {
-color: green;
+const styles = {
+  container: {
+    maxWidth: "500px",
+    margin: "80px auto",
+    padding: "40px",
+    textAlign: "center"
+  },
+  success: {
+    color: "green"
+  },
+  error: {
+    color: "red"
+  }
 }
-
-.error {
-color: red;
-}
-
-</style>
