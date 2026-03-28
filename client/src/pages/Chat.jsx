@@ -28,6 +28,11 @@ export default function Chat() {
         })
 
         setMessages(res.data || [])
+
+        await api.post("/messages/read", {
+          matchId,
+          userId
+        })
       } catch (err) {
         console.error("Fetch messages error:", err)
 
@@ -77,9 +82,20 @@ export default function Chat() {
   useEffect(() => {
     if (!socket) return
 
-    socket.on("receive_message", (data) => {
+    socket.on("receive_message", async (data) => {
       if (data.matchId === matchId) {
         setMessages(prev => [...prev, data.message])
+
+        if (data.message?.senderId?.toString?.() !== userId?.toString?.()) {
+          try {
+            await api.post("/messages/read", {
+              matchId,
+              userId
+            })
+          } catch (err) {
+            console.error("Mark read error:", err)
+          }
+        }
       }
     })
 
@@ -96,7 +112,7 @@ export default function Chat() {
       socket.off("user_typing")
       socket.off("user_stop_typing")
     }
-  }, [matchId])
+  }, [matchId, userId])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
