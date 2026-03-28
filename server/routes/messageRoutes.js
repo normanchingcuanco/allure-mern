@@ -2,6 +2,7 @@ import express from "express"
 import {
   sendMessage,
   getMessages,
+  deleteMessage,
   markMessagesAsRead
 } from "../controllers/messageController.js"
 
@@ -11,6 +12,8 @@ router.post("/", sendMessage)
 
 router.get("/:matchId", getMessages)
 
-router.post("/read", markMessagesAsRead)
+router.delete("/:messageId", deleteMessage)
+
+router.patch("/read", markMessagesAsRead)
 
 export default router

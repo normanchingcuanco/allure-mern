@@ -13,9 +13,11 @@ const initialFilters = {
 }
 
 export default function Discover() {
-  const { userId } = useAuth()
+  const auth = useAuth()
+  const userId = auth?.userId || localStorage.getItem("userId")
 
   const [profiles, setProfiles] = useState([])
+  const [incomingLikes, setIncomingLikes] = useState([])
   const [mode, setMode] = useState("")
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState(initialFilters)
@@ -43,7 +45,10 @@ export default function Discover() {
   }
 
   const fetchProfiles = async (activeFilters = filters, showLoader = true) => {
-    if (!userId) return
+    if (!userId) {
+      setLoading(false)
+      return
+    }
 
     if (showLoader) {
       setLoading(true)
@@ -74,22 +79,33 @@ export default function Discover() {
 
       const res = await api.get(`/profiles/discover/${userId}`, { params })
 
-      setMode(res.data.mode)
+      setMode(res.data?.mode || "")
 
-      if (res.data.mode === "browse") {
-        setProfiles(res.data.profiles || [])
+      if (res.data?.mode === "browse") {
+        setProfiles(Array.isArray(res.data.profiles) ? res.data.profiles : [])
+        setIncomingLikes([])
+      } else if (res.data?.mode === "incoming_likes") {
+        setIncomingLikes(Array.isArray(res.data.likes) ? res.data.likes : [])
+        setProfiles([])
       } else {
         setProfiles([])
+        setIncomingLikes([])
       }
     } catch (err) {
       console.error("Discover fetch error:", err)
+      setProfiles([])
+      setIncomingLikes([])
+      setMode("")
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    if (!userId) return
+    if (!userId) {
+      setLoading(false)
+      return
+    }
 
     fetchProfiles(initialFilters)
     fetchFavorites()
@@ -132,6 +148,7 @@ export default function Discover() {
       )
     } catch (err) {
       console.error("Like error:", err)
+      alert(err.response?.data?.message || "Failed to send like")
     }
   }
 
@@ -165,6 +182,7 @@ export default function Discover() {
       alert(res.data?.message || "Favorite updated")
     } catch (err) {
       console.error("Favorite toggle error:", err)
+      alert(err.response?.data?.message || "Failed to update favorite")
     } finally {
       setFavoriteLoadingIds(prev => prev.filter(id => id !== profileId))
     }
@@ -188,7 +206,7 @@ export default function Discover() {
       <div style={{ padding: "20px" }}>
         <h1>Discover</h1>
 
-        <p>Mode: {mode}</p>
+        <p>Mode: {mode || "unknown"}</p>
 
         {mode === "browse" && (
           <form
@@ -284,11 +302,38 @@ export default function Discover() {
           </form>
         )}
 
-        {profiles.length === 0 && (
+        {mode === "incoming_likes" && (
+          <div style={{ marginBottom: "20px" }}>
+            <h3>Incoming Likes</h3>
+
+            {incomingLikes.length === 0 && (
+              <p>No incoming likes yet</p>
+            )}
+
+            {incomingLikes.map(like => (
+              <div
+                key={like._id}
+                style={{
+                  border: "1px solid #ddd",
+                  borderRadius: "10px",
+                  padding: "15px",
+                  marginBottom: "20px",
+                  maxWidth: "400px"
+                }}
+              >
+                <p>
+                  <strong>From:</strong> {like?.senderId?.email || "User"}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {mode === "browse" && profiles.length === 0 && (
           <p>No profiles available</p>
         )}
 
-        {profiles.map(profile => {
+        {mode === "browse" && profiles.map(profile => {
           if (!profile?.userId) return null
 
           const isFavorited = favoritedProfileIds.includes(profile._id.toString())

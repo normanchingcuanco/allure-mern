@@ -1,78 +1,69 @@
 import mongoose from "mongoose"
 import Match from "../models/Match.js"
 import Message from "../models/Message.js"
-import Profile from "../models/Profile.js"
 
-const isUserInMatch = (match, userId) => {
-  return match.users.some(id => id.toString() === userId.toString())
-}
+const isValidObjectId = (value) => mongoose.Types.ObjectId.isValid(value)
 
 export const getMatches = async (req, res) => {
   try {
     const { userId } = req.params
 
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
+    if (!userId) {
+      return res.status(400).json({
+        message: "User ID is required"
+      })
+    }
+
+    if (!isValidObjectId(userId)) {
       return res.status(400).json({
         message: "Invalid user ID"
       })
     }
 
-    const userObjectId = new mongoose.Types.ObjectId(userId)
-
     const matches = await Match.find({
-      users: userObjectId
-    }).sort({ updatedAt: -1, createdAt: -1 })
+      users: new mongoose.Types.ObjectId(userId)
+    })
+      .populate("users", "email")
+      .sort({ updatedAt: -1, _id: -1 })
 
-    const results = []
-
-    for (const match of matches) {
-      const otherUserId = match.users.find(
-        id => id.toString() !== userId.toString()
-      )
-
-      const profile = await Profile.findOne({
-        userId: otherUserId
-      })
-
-      const messages = await Message.find({
-        matchId: match._id
-      }).sort({ createdAt: -1 })
-
-      const lastMessage = messages.length > 0 ? messages[0] : null
-
-      const unreadCount = messages.filter(message => {
-        const senderId = message.senderId?.toString()
-        const receiverId = message.receiverId?.toString()
-
-        return (
-          senderId !== userId.toString() &&
-          receiverId === userId.toString() &&
-          message.read === false
+    const enrichedMatches = await Promise.all(
+      matches.map(async (match) => {
+        const otherUser = match.users.find(
+          (user) => user._id.toString() !== userId.toString()
         )
-      }).length
 
-      const latestActivity =
-        lastMessage?.createdAt || match.updatedAt || match.createdAt
+        const lastMessage = await Message.findOne({ matchId: match._id })
+          .sort({ createdAt: -1, _id: -1 })
+          .select("text senderId receiverId read createdAt")
 
-      results.push({
-        matchId: match._id,
-        userId: otherUserId,
-        name: profile ? profile.name : "Unknown",
-        photo: profile && profile.photos.length ? profile.photos[0] : null,
-        lastMessage: lastMessage ? lastMessage.text : null,
-        lastMessageTime: lastMessage ? lastMessage.createdAt : null,
-        latestActivity,
-        unreadCount
+        const unreadCount = await Message.countDocuments({
+          matchId: match._id,
+          receiverId: new mongoose.Types.ObjectId(userId),
+          read: false
+        })
+
+        return {
+          ...match.toObject(),
+          otherUser: otherUser || null,
+          lastMessage: lastMessage || null,
+          unreadCount
+        }
       })
-    }
+    )
 
-    results.sort((a, b) => {
-      const aTime = new Date(a.latestActivity || 0).getTime()
-      const bTime = new Date(b.latestActivity || 0).getTime()
+    enrichedMatches.sort((a, b) => {
+      const aTime = a.lastMessage?.createdAt
+        ? new Date(a.lastMessage.createdAt).getTime()
+        : new Date(a.updatedAt).getTime()
+
+      const bTime = b.lastMessage?.createdAt
+        ? new Date(b.lastMessage.createdAt).getTime()
+        : new Date(b.updatedAt).getTime()
+
       return bTime - aTime
     })
 
-    res.json(results)
+    res.json(enrichedMatches)
   } catch (error) {
     console.error(error)
 
@@ -82,14 +73,20 @@ export const getMatches = async (req, res) => {
   }
 }
 
-export const unmatch = async (req, res) => {
+export const unmatchUsers = async (req, res) => {
   try {
     const { matchId } = req.params
     const { userId } = req.body
 
-    if (!mongoose.Types.ObjectId.isValid(matchId)) {
+    if (!matchId || !userId) {
       return res.status(400).json({
-        message: "Invalid match ID"
+        message: "Match ID and user ID are required"
+      })
+    }
+
+    if (!isValidObjectId(matchId) || !isValidObjectId(userId)) {
+      return res.status(400).json({
+        message: "Invalid match ID or user ID"
       })
     }
 
@@ -101,20 +98,21 @@ export const unmatch = async (req, res) => {
       })
     }
 
-    if (userId && !isUserInMatch(match, userId)) {
+    const isParticipant = match.users.some(
+      (user) => user.toString() === userId.toString()
+    )
+
+    if (!isParticipant) {
       return res.status(403).json({
-        message: "Not authorized to unmatch"
+        message: "Not authorized for this match"
       })
     }
 
-    await Message.deleteMany({
-      matchId
-    })
-
+    await Message.deleteMany({ matchId: match._id })
     await Match.findByIdAndDelete(matchId)
 
     res.json({
-      message: "Match removed"
+      message: "Unmatched successfully"
     })
   } catch (error) {
     console.error(error)

@@ -4,8 +4,17 @@ import api from "../api/axios"
 import { useAuth } from "../context/AuthContext"
 import socket from "../socket"
 
+const normalizeId = (value) => {
+  if (!value) return ""
+  if (typeof value === "object") {
+    return value._id?.toString?.() || value.toString?.() || ""
+  }
+  return value.toString()
+}
+
 export default function Chat() {
-  const { userId } = useAuth()
+  const auth = useAuth()
+  const userId = auth?.userId || localStorage.getItem("userId")
   const { matchId } = useParams()
   const navigate = useNavigate()
 
@@ -15,8 +24,22 @@ export default function Chat() {
   const [text, setText] = useState("")
   const [typingUser, setTypingUser] = useState(false)
   const [error, setError] = useState("")
+  const [sending, setSending] = useState(false)
 
   const bottomRef = useRef(null)
+
+  const markCurrentMatchAsRead = async () => {
+    if (!matchId || !userId) return
+
+    try {
+      await api.patch("/messages/read", {
+        matchId,
+        userId
+      })
+    } catch (err) {
+      console.error("Mark read error:", err)
+    }
+  }
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -27,12 +50,9 @@ export default function Chat() {
           params: { userId }
         })
 
-        setMessages(res.data || [])
+        setMessages(Array.isArray(res.data) ? res.data : [])
 
-        await api.post("/messages/read", {
-          matchId,
-          userId
-        })
+        await markCurrentMatchAsRead()
       } catch (err) {
         console.error("Fetch messages error:", err)
 
@@ -56,14 +76,14 @@ export default function Chat() {
       try {
         const res = await api.get(`/matches/${userId}`)
 
-        const match = res.data.find(
-          m => m.matchId === matchId
-        )
+        const match = Array.isArray(res.data)
+          ? res.data.find((m) => m.matchId === matchId)
+          : null
 
         if (!match) return
 
-        setReceiverName(match.name)
-        setReceiverPhoto(match.photo)
+        setReceiverName(match.name || "")
+        setReceiverPhoto(match.photo || "")
       } catch (err) {
         console.error("Fetch match error:", err)
       }
@@ -80,37 +100,36 @@ export default function Chat() {
   }, [matchId, userId])
 
   useEffect(() => {
-    if (!socket) return
+    if (!socket || !matchId || !userId) return
 
-    socket.on("receive_message", async (data) => {
-      if (data.matchId === matchId) {
-        setMessages(prev => [...prev, data.message])
+    const handleReceiveMessage = async (data) => {
+      if (data.matchId !== matchId) return
 
-        if (data.message?.senderId?.toString?.() !== userId?.toString?.()) {
-          try {
-            await api.post("/messages/read", {
-              matchId,
-              userId
-            })
-          } catch (err) {
-            console.error("Mark read error:", err)
-          }
-        }
+      setMessages((prev) => [...prev, data.message])
+
+      const incomingSenderId = normalizeId(data.message?.senderId)
+
+      if (incomingSenderId && incomingSenderId !== normalizeId(userId)) {
+        await markCurrentMatchAsRead()
       }
-    })
+    }
 
-    socket.on("user_typing", () => {
+    const handleUserTyping = () => {
       setTypingUser(true)
-    })
+    }
 
-    socket.on("user_stop_typing", () => {
+    const handleUserStopTyping = () => {
       setTypingUser(false)
-    })
+    }
+
+    socket.on("receive_message", handleReceiveMessage)
+    socket.on("user_typing", handleUserTyping)
+    socket.on("user_stop_typing", handleUserStopTyping)
 
     return () => {
-      socket.off("receive_message")
-      socket.off("user_typing")
-      socket.off("user_stop_typing")
+      socket.off("receive_message", handleReceiveMessage)
+      socket.off("user_typing", handleUserTyping)
+      socket.off("user_stop_typing", handleUserStopTyping)
     }
   }, [matchId, userId])
 
@@ -119,20 +138,23 @@ export default function Chat() {
   }, [messages])
 
   const sendMessage = async () => {
-    if (!text.trim()) return
+    if (!text.trim() || sending) return
 
     try {
+      setSending(true)
       setError("")
+
+      const trimmedText = text.trim()
 
       const res = await api.post("/messages", {
         matchId,
         senderId: userId,
-        text
+        text: trimmedText
       })
 
       const message = res.data.data
 
-      setMessages(prev => [...prev, message])
+      setMessages((prev) => [...prev, message])
 
       if (socket) {
         socket.emit("send_message", {
@@ -157,7 +179,9 @@ export default function Chat() {
         return
       }
 
-      setError("Failed to send message.")
+      setError(err.response?.data?.message || "Failed to send message.")
+    } finally {
+      setSending(false)
     }
   }
 
@@ -177,7 +201,14 @@ export default function Chat() {
     <div style={{ padding: "20px" }}>
       <h1>Chat</h1>
 
-      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          marginBottom: "20px"
+        }}
+      >
         {receiverPhoto && (
           <img
             src={receiverPhoto}
@@ -202,16 +233,12 @@ export default function Chat() {
         }}
       >
         {messages.map((msg) => {
-          const sender =
-            typeof msg.senderId === "object"
-              ? msg.senderId._id
-              : msg.senderId
-
-          const isMe = sender?.toString() === userId
+          const sender = normalizeId(msg.senderId)
+          const isMe = sender === normalizeId(userId)
 
           return (
             <div
-              key={msg._id || msg.text}
+              key={msg._id || `${msg.text}-${msg.createdAt}`}
               style={{
                 display: "flex",
                 justifyContent: isMe ? "flex-end" : "flex-start",
@@ -263,7 +290,7 @@ export default function Chat() {
             }
           }}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && text.trim()) {
+            if (e.key === "Enter" && text.trim() && !sending) {
               e.preventDefault()
               sendMessage()
             }
@@ -272,8 +299,8 @@ export default function Chat() {
           style={{ flex: 1, padding: "10px" }}
         />
 
-        <button onClick={sendMessage}>
-          Send
+        <button onClick={sendMessage} disabled={sending}>
+          {sending ? "Sending..." : "Send"}
         </button>
       </div>
     </div>

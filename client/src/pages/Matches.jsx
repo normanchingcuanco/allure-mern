@@ -1,176 +1,174 @@
 import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { Link } from "react-router-dom"
 import api from "../api/axios"
 import Navbar from "../components/Navbar"
-
-const formatMessageTime = (value) => {
-  if (!value) return ""
-
-  const date = new Date(value)
-
-  return date.toLocaleString([], {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit"
-  })
-}
+import { useAuth } from "../context/AuthContext"
 
 export default function Matches() {
+  const auth = useAuth()
+  const userId = auth?.userId || localStorage.getItem("userId")
+
   const [matches, setMatches] = useState([])
-  const userId = localStorage.getItem("userId")
-  const navigate = useNavigate()
+  const [loading, setLoading] = useState(true)
+  const [unmatchingId, setUnmatchingId] = useState("")
 
   const fetchMatches = async () => {
-    if (!userId) return
+    if (!userId) {
+      setLoading(false)
+      return
+    }
 
     try {
       const res = await api.get(`/matches/${userId}`)
-      setMatches(res.data || [])
+
+      const normalizedMatches = Array.isArray(res.data)
+        ? res.data.map((match) => ({
+            ...match,
+            unreadCount: Number(match?.unreadCount || 0),
+            otherUser: match?.otherUser || null,
+            lastMessage: match?.lastMessage || null
+          }))
+        : []
+
+      setMatches(normalizedMatches)
     } catch (error) {
       console.error(error)
-    }
-  }
-
-  const unmatch = async (matchId) => {
-    try {
-      await api.delete(`/matches/${matchId}`, {
-        data: { userId }
-      })
-
-      setMatches(prev =>
-        prev.filter(match => match.matchId !== matchId)
-      )
-    } catch (error) {
-      console.error(error)
+      setMatches([])
+    } finally {
+      setLoading(false)
     }
   }
 
   useEffect(() => {
+    if (!userId) return
+
     fetchMatches()
+
+    const interval = setInterval(() => {
+      fetchMatches()
+    }, 3000)
+
+    return () => clearInterval(interval)
   }, [userId])
+
+  const handleUnmatch = async (matchId) => {
+    const confirmed = window.confirm("Are you sure you want to unmatch?")
+    if (!confirmed) return
+
+    try {
+      setUnmatchingId(matchId)
+
+      await api.delete(`/matches/${matchId}`, {
+        data: { userId }
+      })
+
+      setMatches((prev) => prev.filter((match) => match._id !== matchId))
+    } catch (error) {
+      console.error(error)
+      alert(error.response?.data?.message || "Failed to unmatch")
+    } finally {
+      setUnmatchingId("")
+    }
+  }
+
+  const formatTime = (value) => {
+    if (!value) return ""
+
+    const date = new Date(value)
+
+    if (Number.isNaN(date.getTime())) return ""
+
+    return date.toLocaleString()
+  }
 
   return (
     <>
       <Navbar />
 
       <div style={{ padding: "20px" }}>
-        <h1>Your Matches</h1>
+        <h1>Matches</h1>
 
-        {matches.length === 0 && (
+        {loading && <p>Loading matches...</p>}
+
+        {!loading && matches.length === 0 && (
           <p>No matches yet</p>
         )}
 
-        {matches.map((match) => (
-          <div
-            key={match.matchId}
-            style={{
-              border: "1px solid #ccc",
-              padding: "15px",
-              marginBottom: "15px",
-              borderRadius: "10px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: "15px"
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "12px",
-                flex: 1,
-                minWidth: 0
-              }}
-            >
-              {match.photo ? (
-                <img
-                  src={match.photo}
-                  alt={match.name}
-                  style={{
-                    width: "60px",
-                    height: "60px",
-                    borderRadius: "50%",
-                    objectFit: "cover"
-                  }}
-                />
-              ) : (
-                <div
-                  style={{
-                    width: "60px",
-                    height: "60px",
-                    borderRadius: "50%",
-                    background: "#eee",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontWeight: "bold"
-                  }}
-                >
-                  {match.name?.charAt(0) || "U"}
-                </div>
-              )}
+        {!loading &&
+          matches.map((match) => {
+            const otherUserEmail = match?.otherUser?.email || "User"
+            const unreadCount = Number(match?.unreadCount || 0)
+            const lastMessageText = match?.lastMessage?.text || "No messages yet"
+            const lastMessageTime = match?.lastMessage?.createdAt
+              ? formatTime(match.lastMessage.createdAt)
+              : ""
 
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ margin: "0 0 6px 0" }}>
-                  <strong>{match.name || "User"}</strong>
-                </p>
-
-                <p
-                  style={{
-                    margin: "0 0 6px 0",
-                    color: "#555",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis"
-                  }}
-                >
-                  {match.lastMessage || "No messages yet"}
-                </p>
-
+            return (
+              <div
+                key={match._id}
+                style={{
+                  border: "1px solid #ddd",
+                  borderRadius: "10px",
+                  padding: "15px",
+                  marginBottom: "15px",
+                  maxWidth: "500px"
+                }}
+              >
                 <div
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: "10px",
-                    flexWrap: "wrap"
+                    justifyContent: "space-between",
+                    gap: "12px"
                   }}
                 >
-                  {match.lastMessageTime && (
-                    <small style={{ color: "#777" }}>
-                      {formatMessageTime(match.lastMessageTime)}
-                    </small>
-                  )}
+                  <h3 style={{ marginTop: 0, marginBottom: "8px" }}>
+                    {otherUserEmail}
+                  </h3>
 
-                  {match.unreadCount > 0 && (
+                  {unreadCount > 0 && (
                     <span
                       style={{
-                        background: "#222",
+                        background: "#ff4d4f",
                         color: "#fff",
                         borderRadius: "999px",
-                        padding: "3px 8px",
-                        fontSize: "12px"
+                        padding: "4px 10px",
+                        fontSize: "12px",
+                        fontWeight: "bold",
+                        minWidth: "28px",
+                        textAlign: "center"
                       }}
                     >
-                      {match.unreadCount} unread
+                      {unreadCount}
                     </span>
                   )}
                 </div>
+
+                <p style={{ marginBottom: "8px" }}>
+                  <strong>Last message:</strong> {lastMessageText}
+                </p>
+
+                {lastMessageTime && (
+                  <p style={{ marginTop: 0, color: "#666", fontSize: "14px" }}>
+                    {lastMessageTime}
+                  </p>
+                )}
+
+                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                  <Link to={`/chat/${match._id}`}>
+                    <button>Open Chat</button>
+                  </Link>
+
+                  <button
+                    onClick={() => handleUnmatch(match._id)}
+                    disabled={unmatchingId === match._id}
+                  >
+                    {unmatchingId === match._id ? "Unmatching..." : "Unmatch"}
+                  </button>
+                </div>
               </div>
-            </div>
-
-            <div style={{ display: "flex", gap: "10px", flexShrink: 0 }}>
-              <button onClick={() => navigate(`/chat/${match.matchId}`)}>
-                Open Chat
-              </button>
-
-              <button onClick={() => unmatch(match.matchId)}>
-                Unmatch
-              </button>
-            </div>
-          </div>
-        ))}
+            )
+          })}
       </div>
     </>
   )

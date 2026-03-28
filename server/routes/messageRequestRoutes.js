@@ -4,7 +4,8 @@ import {
   getIncomingRequests,
   acceptMessageRequest,
   rejectMessageRequest,
-  getOutgoingRequests
+  getOutgoingRequests,
+  cancelMessageRequest
 } from "../controllers/messageRequestController.js"
 
 const router = express.Router()
@@ -18,5 +19,7 @@ router.get("/outgoing/:userId", getOutgoingRequests)
 router.patch("/:requestId/accept", acceptMessageRequest)
 
 router.patch("/:requestId/reject", rejectMessageRequest)
+
+router.patch("/:requestId/cancel", cancelMessageRequest)
 
 export default router

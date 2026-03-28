@@ -4,7 +4,6 @@ import api from "../api/axios"
 import Navbar from "../components/Navbar"
 
 export default function Profile() {
-
   const { userId } = useParams()
 
   const [profile, setProfile] = useState(null)
@@ -12,37 +11,31 @@ export default function Profile() {
   const [reportDescription, setReportDescription] = useState("")
   const [message, setMessage] = useState("")
   const [blocking, setBlocking] = useState(false)
+  const [sendingRequest, setSendingRequest] = useState(false)
 
   const currentUserId = localStorage.getItem("userId")
 
   useEffect(() => {
-
     const fetchProfile = async () => {
-
       try {
-
         const res = await api.get(`/profiles/user/${userId}`)
         setProfile(res.data)
-
       } catch (err) {
         console.error(err)
       }
-
     }
 
     fetchProfile()
-
   }, [userId])
 
-
   const sendMessageRequest = async () => {
-
     if (!message.trim()) {
       alert("Please enter a message")
       return
     }
 
     try {
+      setSendingRequest(true)
 
       await api.post("/message-requests", {
         senderId: currentUserId,
@@ -52,24 +45,21 @@ export default function Profile() {
 
       alert("Message request sent")
       setMessage("")
-
     } catch (error) {
       console.error(error)
-      alert("Failed to send message request")
+      alert(error.response?.data?.message || "Failed to send message request")
+    } finally {
+      setSendingRequest(false)
     }
-
   }
 
-
   const handleReport = async () => {
-
     if (!reportReason) {
       alert("Please select a reason")
       return
     }
 
     try {
-
       await api.post("/reports", {
         reporterId: currentUserId,
         reportedUserId: userId,
@@ -81,21 +71,16 @@ export default function Profile() {
 
       setReportReason("")
       setReportDescription("")
-
     } catch (err) {
       console.error(err)
       alert("Failed to submit report")
     }
-
   }
 
-
   const blockUser = async () => {
-
     if (!window.confirm("Are you sure you want to block this user?")) return
 
     try {
-
       setBlocking(true)
 
       await api.post("/blocks", {
@@ -104,16 +89,13 @@ export default function Profile() {
       })
 
       alert("User blocked")
-
     } catch (error) {
       console.error(error)
-      alert("Failed to block user")
+      alert(error.response?.data?.message || "Failed to block user")
     } finally {
       setBlocking(false)
     }
-
   }
-
 
   if (!profile) {
     return (
@@ -177,8 +159,8 @@ export default function Profile() {
 
       <br /><br />
 
-      <button onClick={sendMessageRequest}>
-        Send Message Request
+      <button onClick={sendMessageRequest} disabled={sendingRequest}>
+        {sendingRequest ? "Sending..." : "Send Message Request"}
       </button>
 
       <hr />
@@ -224,10 +206,8 @@ export default function Profile() {
           borderRadius: "6px"
         }}
       >
-        Block User
+        {blocking ? "Blocking..." : "Block User"}
       </button>
-
     </>
   )
-
 }

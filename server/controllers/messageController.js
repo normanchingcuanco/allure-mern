@@ -10,9 +10,20 @@ export const sendMessage = async (req, res) => {
   try {
     const { matchId, senderId, text } = req.body
 
-    if (!matchId || !senderId || !text) {
+    const trimmedText = text?.trim()
+
+    if (!matchId || !senderId || !trimmedText) {
       return res.status(400).json({
-        message: "Missing required fields"
+        message: "Match ID, sender ID, and text are required"
+      })
+    }
+
+    if (
+      !mongoose.Types.ObjectId.isValid(matchId) ||
+      !mongoose.Types.ObjectId.isValid(senderId)
+    ) {
+      return res.status(400).json({
+        message: "Invalid match ID or sender ID"
       })
     }
 
@@ -34,11 +45,18 @@ export const sendMessage = async (req, res) => {
       user => user.toString() !== senderId.toString()
     )
 
+    if (!receiverId) {
+      return res.status(400).json({
+        message: "Receiver not found for this match"
+      })
+    }
+
     const message = await Message.create({
       matchId,
       senderId,
       receiverId,
-      text
+      text: trimmedText,
+      read: false
     })
 
     await Match.findByIdAndUpdate(matchId, {
@@ -73,6 +91,15 @@ export const getMessages = async (req, res) => {
       })
     }
 
+    if (
+      !mongoose.Types.ObjectId.isValid(matchId) ||
+      !mongoose.Types.ObjectId.isValid(userId)
+    ) {
+      return res.status(400).json({
+        message: "Invalid match ID or user ID"
+      })
+    }
+
     const match = await Match.findById(matchId)
 
     if (!match) {
@@ -88,7 +115,7 @@ export const getMessages = async (req, res) => {
     }
 
     const messages = await Message.find({ matchId })
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: -1, _id: -1 })
       .skip(skip)
       .limit(limit)
 
@@ -110,6 +137,15 @@ export const deleteMessage = async (req, res) => {
     if (!userId) {
       return res.status(400).json({
         message: "User ID is required"
+      })
+    }
+
+    if (
+      !mongoose.Types.ObjectId.isValid(messageId) ||
+      !mongoose.Types.ObjectId.isValid(userId)
+    ) {
+      return res.status(400).json({
+        message: "Invalid message ID or user ID"
       })
     }
 
@@ -161,7 +197,16 @@ export const markMessagesAsRead = async (req, res) => {
 
     if (!matchId || !userId) {
       return res.status(400).json({
-        message: "Match ID and User ID are required"
+        message: "Match ID and user ID are required"
+      })
+    }
+
+    if (
+      !mongoose.Types.ObjectId.isValid(matchId) ||
+      !mongoose.Types.ObjectId.isValid(userId)
+    ) {
+      return res.status(400).json({
+        message: "Invalid match ID or user ID"
       })
     }
 
@@ -179,13 +224,10 @@ export const markMessagesAsRead = async (req, res) => {
       })
     }
 
-    const matchObjectId = new mongoose.Types.ObjectId(matchId)
-    const userObjectId = new mongoose.Types.ObjectId(userId)
-
     const result = await Message.updateMany(
       {
-        matchId: matchObjectId,
-        senderId: { $ne: userObjectId },
+        matchId: new mongoose.Types.ObjectId(matchId),
+        receiverId: new mongoose.Types.ObjectId(userId),
         read: false
       },
       {
