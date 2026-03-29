@@ -179,8 +179,8 @@ This positions the platform as:
 | Block Users | Users can block unwanted interactions | Protect user experience | Improve platform safety | ✅ Implemented |
 | Unblock Users | Users can remove previously blocked users | Allow users to reverse blocking decisions | Restore interaction permissions | ✅ Implemented |
 | Block Enforcement | Blocked users cannot appear in discovery or interact | Maintain safety boundaries | Prevent unwanted contact | ✅ Implemented |
-| User Reporting | Users can report suspicious accounts | Enable moderation | Reduce scams and abuse | ⚠️ Partial |
-| Profile Verification Badge | Verified users receive badges | Build trust | Increase platform credibility | ⚠️ Partial |
+| User Reporting | Users can report suspicious accounts | Enable moderation | Reduce scams and abuse | ✅ Implemented |
+| Profile Verification Badge | Verified users receive badges | Build trust | Increase platform credibility | ✅ Implemented |
 | Interaction Abuse Prevention | Prevent repeated likes or messaging spam | Protect platform integrity | Maintain fair user interaction | ✅ Implemented |
 
 ---

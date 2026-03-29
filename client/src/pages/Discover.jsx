@@ -363,7 +363,27 @@ export default function Discover() {
                 />
               )}
 
-              <h3>{profile.name}</h3>
+              <h3 style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                <span>{profile.name}</span>
+
+                {profile.isVerified && (
+                  <span
+                    style={{
+                      display: "inline-block",
+                      padding: "4px 10px",
+                      backgroundColor: "#e6f4ea",
+                      color: "#137333",
+                      border: "1px solid #b7dfc2",
+                      borderRadius: "999px",
+                      fontSize: "12px",
+                      fontWeight: "600"
+                    }}
+                  >
+                    ✅ Verified
+                  </span>
+                )}
+              </h3>
+
               <p>Age: {profile.age}</p>
               <p>{profile.bio}</p>
 

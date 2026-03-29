@@ -8,10 +8,10 @@ import crypto from "crypto"
 export const registerUser = async (req, res) => {
   try {
 
-    const { email, password } = req.body
+    const { email, password, gender } = req.body
 
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email and password are required" })
+    if (!email || !password || !gender) {
+      return res.status(400).json({ message: "Email, password, and gender are required" })
     }
 
     const normalizedEmail = email.toLowerCase().trim()
@@ -29,6 +29,7 @@ export const registerUser = async (req, res) => {
     const newUser = new User({
       email: normalizedEmail,
       password: hashedPassword,
+      gender,
       emailVerificationToken: verificationToken,
       emailVerificationExpires: Date.now() + 3600000
     })

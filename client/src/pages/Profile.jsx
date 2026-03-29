@@ -119,7 +119,27 @@ export default function Profile() {
     <>
       <Navbar />
 
-      <h1>{profile.name}</h1>
+      <h1>
+        {profile.name}{" "}
+        {profile.isVerified && (
+          <span
+            style={{
+              display: "inline-block",
+              marginLeft: "10px",
+              padding: "4px 10px",
+              backgroundColor: "#e6f4ea",
+              color: "#137333",
+              border: "1px solid #b7dfc2",
+              borderRadius: "999px",
+              fontSize: "14px",
+              fontWeight: "600",
+              verticalAlign: "middle"
+            }}
+          >
+            ✅ Verified
+          </span>
+        )}
+      </h1>
 
       <p>Age: {profile.age}</p>
 
