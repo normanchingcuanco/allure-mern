@@ -106,11 +106,23 @@ export default function Profile() {
     )
   }
 
+  // ✅ UPDATED BLOCK
   if (currentUserId === userId) {
     return (
       <>
         <Navbar />
+
         <h2>This is your profile</h2>
+
+        {profile?.isVerified ? (
+          <p style={{ color: "green", fontWeight: "600" }}>
+            ✅ Your profile is verified
+          </p>
+        ) : (
+          <p style={{ color: "#999" }}>
+            Your profile is not verified yet. Go to Verification to submit.
+          </p>
+        )}
       </>
     )
   }

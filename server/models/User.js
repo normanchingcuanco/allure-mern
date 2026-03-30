@@ -26,6 +26,11 @@ const userSchema = new mongoose.Schema(
     default: "user"
   },
 
+  isAdmin: {
+    type: Boolean,
+    default: false
+  },
+
   isEmailVerified: {
     type: Boolean,
     default: false

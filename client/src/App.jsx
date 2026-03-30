@@ -13,6 +13,8 @@ import Matches from "./pages/Matches"
 import Chat from "./pages/Chat"
 import MessageRequests from "./pages/MessageRequests"
 import BlockedUsers from "./pages/BlockedUsers"
+import VerificationRequest from "./pages/VerificationRequest"
+import AdminVerification from "./pages/AdminVerification"
 
 function App() {
 
@@ -38,6 +40,9 @@ function App() {
 
       <Route path="/message-requests" element={<MessageRequests />} />
       <Route path="/blocked-users" element={<BlockedUsers />} />
+
+      <Route path="/verification-request" element={<VerificationRequest />} />
+      <Route path="/admin/verification" element={<AdminVerification />} />
 
     </Routes>
   )

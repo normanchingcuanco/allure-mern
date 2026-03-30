@@ -25,6 +25,9 @@ export default function Login() {
       })
 
       console.log("LOGIN RESPONSE:", res.data)
+      console.log("LOGIN isAdmin:", res.data.isAdmin)
+      console.log("LOGIN email:", res.data.email)
+      console.log("LOGIN userId:", res.data.userId)
 
       const userId =
         res.data.user?._id ||
@@ -38,7 +41,7 @@ export default function Login() {
         throw new Error("Invalid login response structure")
       }
 
-      login(userId, token)
+      login(userId, token, res.data.isAdmin)
 
       try {
 

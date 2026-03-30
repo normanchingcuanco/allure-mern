@@ -3,8 +3,6 @@ import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 import crypto from "crypto"
 
-
-
 export const registerUser = async (req, res) => {
   try {
 
@@ -52,12 +50,14 @@ export const registerUser = async (req, res) => {
   }
 }
 
-
-
 export const loginUser = async (req, res) => {
   try {
 
     const { email, password } = req.body
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" })
+    }
 
     const normalizedEmail = email.toLowerCase().trim()
 
@@ -83,7 +83,8 @@ export const loginUser = async (req, res) => {
       {
         id: user._id,
         email: user.email,
-        role: user.role
+        role: user.role,
+        isAdmin: user.isAdmin
       },
       process.env.JWT_SECRET || "secret",
       { expiresIn: "7d" }
@@ -92,7 +93,9 @@ export const loginUser = async (req, res) => {
     res.json({
       token,
       userId: user._id,
-      email: user.email
+      email: user.email,
+      isAdmin: user.isAdmin,
+      role: user.role
     })
 
   } catch (error) {
@@ -104,8 +107,6 @@ export const loginUser = async (req, res) => {
 
   }
 }
-
-
 
 export const verifyEmail = async (req, res) => {
   try {
@@ -143,9 +144,6 @@ export const verifyEmail = async (req, res) => {
   }
 }
 
-
-
-// ================= NEW: RESEND VERIFICATION =================
 export const resendVerification = async (req, res) => {
   try {
 
