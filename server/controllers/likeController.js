@@ -163,3 +163,21 @@ export const unlike = async (req, res) => {
 
   }
 }
+
+export const getIncomingLikesCount = async (req, res) => {
+  try {
+    const { userId } = req.params
+
+    const count = await Like.countDocuments({
+      receiverId: userId
+    })
+
+    res.json({ count })
+
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch incoming likes count",
+      error
+    })
+  }
+}

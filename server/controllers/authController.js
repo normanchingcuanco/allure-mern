@@ -67,6 +67,10 @@ export const loginUser = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" })
     }
 
+    if (user.isSuspended) {
+      return res.status(403).json({ message: "Your account has been suspended" })
+    }
+
     if (!user.isEmailVerified) {
       return res.status(403).json({
         message: "Please verify your email before logging in"
@@ -175,6 +179,62 @@ export const resendVerification = async (req, res) => {
     res.json({
       message: "Verification token regenerated",
       verificationToken: newToken
+    })
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: "Server error",
+      error
+    })
+
+  }
+}
+
+export const changePassword = async (req, res) => {
+  try {
+
+    const { userId, currentPassword, newPassword } = req.body
+
+    if (!userId || !currentPassword || !newPassword) {
+      return res.status(400).json({
+        message: "User ID, current password, and new password are required"
+      })
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        message: "New password must be at least 6 characters long"
+      })
+    }
+
+    const user = await User.findById(userId)
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" })
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password)
+
+    if (!isMatch) {
+      return res.status(400).json({ message: "Current password is incorrect" })
+    }
+
+    const isSamePassword = await bcrypt.compare(newPassword, user.password)
+
+    if (isSamePassword) {
+      return res.status(400).json({
+        message: "New password must be different from current password"
+      })
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10)
+    user.password = hashedPassword
+
+    await user.save()
+
+    res.json({
+      message: "Password updated successfully"
     })
 
   } catch (error) {

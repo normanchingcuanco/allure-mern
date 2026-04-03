@@ -3,7 +3,8 @@ import {
   registerUser,
   loginUser,
   verifyEmail,
-  resendVerification
+  resendVerification,
+  changePassword
 } from "../controllers/authController.js"
 
 const router = express.Router()
@@ -11,6 +12,7 @@ const router = express.Router()
 router.post("/register", registerUser)
 router.post("/login", loginUser)
 router.post("/resend-verification", resendVerification)
+router.put("/change-password", changePassword)
 
 router.get("/verify-email/:token", verifyEmail)
 

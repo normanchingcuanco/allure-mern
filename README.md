@@ -134,7 +134,7 @@ This positions the platform as:
 |------|------|------|------|------|
 | Like System | Users can like other profiles | Express interest | Enable match creation | ✅ Implemented |
 | Duplicate Like Prevention | Prevent repeated likes to the same user | Maintain platform integrity | Avoid interaction abuse | ✅ Implemented |
-| Incoming Likes | Users can see who liked their profile | Enable supply-side interaction review | Allow supply users to review interest | ⚠️ Partial (Discover view limited, full actions in Likes page) |
+| Incoming Likes | Users can see who liked their profile | Enable supply-side interaction review | Allow supply users to review interest | ✅ Implemented |
 | Like Back Action | Users can like back directly from incoming likes | Complete mutual interest flow | Allow supply users to convert likes into matches | ✅ Implemented |
 | Favorite Profiles | Users bookmark profiles | Save interesting profiles | Encourage return engagement | ✅ Implemented |
 | Favorite Toggle | Users can favorite and unfavorite from Discover | Improve saved-profile control | Let users manage bookmarks without leaving discovery | ✅ Implemented |
@@ -191,7 +191,7 @@ This positions the platform as:
 
 | Feature Name | Description | Objective | Purpose | Build Status |
 |------|------|------|------|------|
-| Account Settings | Users manage account preferences | Give users control over accounts | Improve usability | ⬜ Not Built |
+| Account Settings | Users manage account preferences | Give users control over accounts | Improve usability | ✅ Implemented |
 | Delete Account | Users can remove their accounts | Support user autonomy | Maintain platform transparency | ✅ Implemented |
 
 ---
@@ -202,9 +202,9 @@ This positions the platform as:
 | Feature Name | Description | Objective | Purpose | Build Status |
 |------|------|------|------|------|
 | New Match Notification | Notify users when a new match occurs | Improve engagement | Encourage users to start conversations | ⬜ Not Built |
-| Message Notification | Notify users when they receive new messages | Maintain active conversations | Improve responsiveness | ⚠️ Partial (unread badges implemented) |
-| Like Notification | Notify users when someone likes their profile | Increase user engagement | Encourage profile interaction | ⚠️ Partial (incoming likes functional, UX split across pages) |
-| Verification Status Notification | Notify users when verification is approved or rejected | Improve user feedback loop | Increase trust and transparency | ⬜ Not Built |
+| Message Notification | Notify users when they receive new messages | Maintain active conversations | Improve responsiveness | ⚠️ Partial (navbar badges + auto-refresh implemented) |
+| Like Notification | Notify users when someone likes their profile | Increase user engagement | Encourage profile interaction | ⚠️ Partial (incoming likes badge implemented) |
+| Verification Status Notification | Notify users when verification is approved or rejected | Improve user feedback loop | Increase trust and transparency | ⚠️ Partial (status visible in settings, no notification trigger) |
 
 ---
 
@@ -225,9 +225,9 @@ This positions the platform as:
 
 | Feature Name | Description | Objective | Purpose | Build Status |
 |------|------|------|------|------|
-| Report Review System | Admin can review reported users | Maintain platform safety | Remove abusive users | ⬜ Not Built |
-| User Suspension | Admin can temporarily suspend accounts | Enforce platform rules | Prevent misuse | ⬜ Not Built |
-| User Deletion | Admin can permanently remove users | Maintain platform integrity | Protect community | ⬜ Not Built |
+| Report Review System | Admin can review reported users | Maintain platform safety | Remove abusive users | ⚠️ Partial (backend exists, UI not built) |
+| User Suspension | Admin can temporarily suspend accounts | Enforce platform rules | Prevent misuse | ⚠️ Partial (backend exists, not operationalized) |
+| User Deletion | Admin can permanently remove users | Maintain platform integrity | Protect community | ⚠️ Partial (backend exists, not operationalized) |
 | Verification Review System | Admin can review and approve/reject verification requests | Enable identity verification workflow | Strengthen trust system | ✅ Implemented |
 
 ---

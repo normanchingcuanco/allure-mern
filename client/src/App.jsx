@@ -15,6 +15,7 @@ import MessageRequests from "./pages/MessageRequests"
 import BlockedUsers from "./pages/BlockedUsers"
 import VerificationRequest from "./pages/VerificationRequest"
 import AdminVerification from "./pages/AdminVerification"
+import AccountSettings from "./pages/AccountSettings"
 
 function App() {
 
@@ -43,6 +44,8 @@ function App() {
 
       <Route path="/verification-request" element={<VerificationRequest />} />
       <Route path="/admin/verification" element={<AdminVerification />} />
+
+      <Route path="/settings" element={<AccountSettings />} />
 
     </Routes>
   )
