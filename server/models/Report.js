@@ -21,6 +21,23 @@ const reportSchema = new mongoose.Schema(
 
   description: {
     type: String
+  },
+
+  status: {
+    type: String,
+    enum: ["pending", "resolved"],
+    default: "pending"
+  },
+
+  reviewedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null
+  },
+
+  reviewedAt: {
+    type: Date,
+    default: null
   }
 
 },

@@ -8,7 +8,9 @@ export const getReports = async (req, res) => {
 
     const reports = await Report.find()
       .populate("reporterId", "email")
-      .populate("reportedUserId", "email")
+      .populate("reportedUserId", "email isSuspended")
+      .populate("reviewedBy", "email")
+      .sort({ createdAt: -1 })
 
     res.json(reports)
 
@@ -41,6 +43,77 @@ export const suspendUser = async (req, res) => {
     res.json({
       message: "User suspended",
       user
+    })
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: "Server error",
+      error
+    })
+
+  }
+}
+
+
+/* Unsuspend user */
+export const unsuspendUser = async (req, res) => {
+  try {
+
+    const { userId } = req.params
+
+    const user = await User.findById(userId)
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" })
+    }
+
+    user.isSuspended = false
+    await user.save()
+
+    res.json({
+      message: "User unsuspended",
+      user
+    })
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: "Server error",
+      error
+    })
+
+  }
+}
+
+
+/* Mark report as resolved */
+export const resolveReport = async (req, res) => {
+  try {
+
+    const { reportId } = req.params
+    const { adminUserId } = req.body
+
+    const report = await Report.findById(reportId)
+
+    if (!report) {
+      return res.status(404).json({ message: "Report not found" })
+    }
+
+    report.status = "resolved"
+    report.reviewedBy = adminUserId || null
+    report.reviewedAt = new Date()
+
+    await report.save()
+
+    const updatedReport = await Report.findById(report._id)
+      .populate("reporterId", "email")
+      .populate("reportedUserId", "email isSuspended")
+      .populate("reviewedBy", "email")
+
+    res.json({
+      message: "Report resolved",
+      report: updatedReport
     })
 
   } catch (error) {

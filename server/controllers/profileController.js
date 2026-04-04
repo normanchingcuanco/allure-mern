@@ -48,9 +48,14 @@ export const createProfile = async (req, res) => {
 
 export const getProfiles = async (req, res) => {
   try {
-    const profiles = await Profile.find().populate("userId", "email gender")
+    const profiles = await Profile.find().populate("userId", "email gender isSuspended")
 
-    res.json(profiles)
+    const filteredProfiles = profiles.filter(profile => {
+      if (!profile.userId) return false
+      return profile.userId.isSuspended !== true
+    })
+
+    res.json(filteredProfiles)
   } catch (error) {
     res.status(500).json({
       message: "Server error",
@@ -62,9 +67,13 @@ export const getProfiles = async (req, res) => {
 export const getProfileById = async (req, res) => {
   try {
     const profile = await Profile.findById(req.params.id)
-      .populate("userId", "email gender")
+      .populate("userId", "email gender isSuspended")
 
     if (!profile) {
+      return res.status(404).json({ message: "Profile not found" })
+    }
+
+    if (!profile.userId || profile.userId.isSuspended) {
       return res.status(404).json({ message: "Profile not found" })
     }
 
@@ -108,6 +117,10 @@ export const discoverProfiles = async (req, res) => {
       return res.status(404).json({ message: "User not found" })
     }
 
+    if (currentUser.isSuspended) {
+      return res.status(403).json({ message: "Your account has been suspended" })
+    }
+
     /* Female users see incoming likes */
     if (currentUser.gender === "female") {
       const likes = await Like.find({ receiverId: userId })
@@ -117,9 +130,14 @@ export const discoverProfiles = async (req, res) => {
         })
         .sort({ createdAt: -1 })
 
+      const filteredLikes = likes.filter(like => {
+        if (!like.senderId) return false
+        return like.senderId.isSuspended !== true
+      })
+
       return res.json({
         mode: "incoming_likes",
-        likes
+        likes: filteredLikes
       })
     }
 
@@ -141,10 +159,14 @@ export const discoverProfiles = async (req, res) => {
         : block.blockerId.toString()
     )
 
+    const suspendedUsers = await User.find({ isSuspended: true }).select("_id")
+    const suspendedUserIds = suspendedUsers.map(user => user._id.toString())
+
     const excludedIds = [
       userId.toString(),
       ...likedUserIds,
-      ...blockedUserIds
+      ...blockedUserIds,
+      ...suspendedUserIds
     ]
 
     const parsedMinAge = minAge ? Number(minAge) : null
@@ -196,11 +218,12 @@ export const discoverProfiles = async (req, res) => {
     }
 
     const profiles = await Profile.find(filter)
-      .populate("userId", "email gender")
+      .populate("userId", "email gender isSuspended")
       .sort({ createdAt: -1 })
 
     const filteredProfiles = profiles.filter(profile => {
       if (!profile?.userId) return false
+      if (profile.userId.isSuspended) return false
       return profile.userId.gender === "female"
     })
 
@@ -270,14 +293,25 @@ export const getMyProfile = async (req, res) => {
     const { userId } = req.params
 
     const profile = await Profile.findOne({ userId })
+      .populate("userId", "email gender isSuspended")
 
     if (!profile) {
-      return res.status(404).json({ message: "Profile not found" })
+      return res.status(404).json({
+        message: "Profile not found"
+      })
+    }
+
+    if (!profile.userId || profile.userId.isSuspended) {
+      return res.status(404).json({
+        message: "Profile not found"
+      })
     }
 
     res.json(profile)
   } catch (error) {
     console.error(error)
-    res.status(500).json({ message: "Server error" })
+    res.status(500).json({
+      message: "Server error"
+    })
   }
 }

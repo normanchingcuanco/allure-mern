@@ -120,6 +120,22 @@ export const getOutgoingRequests = async (req, res) => {
   }
 }
 
+export const getIncomingRequestsCount = async (req, res) => {
+  try {
+    const { userId } = req.params
+
+    const count = await MessageRequest.countDocuments({
+      receiver: new mongoose.Types.ObjectId(userId),
+      status: "pending"
+    })
+
+    res.json({ count })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: "Failed to fetch request count" })
+  }
+}
+
 export const acceptMessageRequest = async (req, res) => {
   try {
     const { requestId } = req.params

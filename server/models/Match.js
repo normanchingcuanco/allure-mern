@@ -8,6 +8,13 @@ const matchSchema = new mongoose.Schema(
         ref: "User",
         required: true
       }
+    ],
+
+    isNewFor: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+      }
     ]
   },
   {

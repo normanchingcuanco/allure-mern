@@ -247,3 +247,22 @@ export const markMessagesAsRead = async (req, res) => {
     })
   }
 }
+
+export const getUnreadCount = async (req, res) => {
+  try {
+    const { userId } = req.params
+
+    const count = await Message.countDocuments({
+      receiverId: new mongoose.Types.ObjectId(userId),
+      read: false
+    })
+
+    res.json({ count })
+  } catch (error) {
+    console.error(error)
+
+    res.status(500).json({
+      message: "Failed to fetch unread count"
+    })
+  }
+}

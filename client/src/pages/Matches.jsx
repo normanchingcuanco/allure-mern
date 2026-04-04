@@ -51,6 +51,20 @@ export default function Matches() {
     return () => clearInterval(interval)
   }, [userId])
 
+  useEffect(() => {
+    const clearNewMatches = async () => {
+      try {
+        await api.patch("/matches/clear-new", {
+          userId
+        })
+      } catch (err) {
+        console.error(err)
+      }
+    }
+
+    if (userId) clearNewMatches()
+  }, [userId])
+
   const handleUnmatch = async (matchId) => {
     const confirmed = window.confirm("Are you sure you want to unmatch?")
     if (!confirmed) return

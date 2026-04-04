@@ -1,5 +1,20 @@
 import Like from "../models/Like.js"
 import Match from "../models/Match.js"
+import User from "../models/User.js"
+
+const getMatchedUserIds = async (userId) => {
+  const matches = await Match.find({
+    users: userId
+  }).select("users")
+
+  const matchedUserIds = matches.flatMap(match =>
+    match.users
+      .map(id => id.toString())
+      .filter(id => id !== userId.toString())
+  )
+
+  return matchedUserIds
+}
 
 export const sendLike = async (req, res) => {
   try {
@@ -10,15 +25,43 @@ export const sendLike = async (req, res) => {
       return res.status(400).json({ message: "You cannot like yourself" })
     }
 
-    /* Prevent duplicate like */
+    const sender = await User.findById(senderId)
+    const receiver = await User.findById(receiverId)
+
+    if (!sender || !receiver) {
+      return res.status(404).json({ message: "User not found" })
+    }
+
+    if (sender.isSuspended) {
+      return res.status(403).json({ message: "Your account has been suspended" })
+    }
+
+    if (receiver.isSuspended) {
+      return res.status(403).json({ message: "You cannot like this user" })
+    }
+
+    const existingMatch = await Match.findOne({
+      users: { $all: [senderId, receiverId] }
+    })
+
+    if (existingMatch) {
+      if (!existingMatch.isNewFor) {
+        existingMatch.isNewFor = []
+      }
+
+      await existingMatch.save()
+
+      return res.status(200).json({
+        message: "Already matched",
+        match: existingMatch
+      })
+    }
 
     const existingLike = await Like.findOne({ senderId, receiverId })
 
     if (existingLike) {
       return res.status(400).json({ message: "Already liked this user" })
     }
-
-    /* Rate limit: 30 likes/hour */
 
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
 
@@ -33,12 +76,8 @@ export const sendLike = async (req, res) => {
       })
     }
 
-    /* Save like */
-
     const like = new Like({ senderId, receiverId })
     await like.save()
-
-    /* Check reciprocal like */
 
     const reverseLike = await Like.findOne({
       senderId: receiverId,
@@ -48,21 +87,29 @@ export const sendLike = async (req, res) => {
     let match = null
 
     if (reverseLike) {
-
-      const existingMatch = await Match.findOne({
+      match = await Match.findOne({
         users: { $all: [senderId, receiverId] }
       })
 
-      if (!existingMatch) {
-
+      if (!match) {
         match = new Match({
-          users: [senderId, receiverId]
+          users: [senderId, receiverId],
+          isNewFor: [senderId, receiverId]
         })
 
         await match.save()
-
       } else {
-        match = existingMatch
+        const currentIds = (match.isNewFor || []).map(id => id.toString())
+
+        if (!currentIds.includes(senderId.toString())) {
+          match.isNewFor.push(senderId)
+        }
+
+        if (!currentIds.includes(receiverId.toString())) {
+          match.isNewFor.push(receiverId)
+        }
+
+        await match.save()
       }
     }
 
@@ -103,12 +150,20 @@ export const getReceivedLikes = async (req, res) => {
   try {
 
     const { userId } = req.params
+    const matchedUserIds = await getMatchedUserIds(userId)
 
     const likes = await Like.find({
       receiverId: userId
-    }).populate("senderId", "email gender")
+    }).populate("senderId", "email gender isSuspended")
 
-    res.json(likes)
+    const filteredLikes = likes.filter(like => {
+      if (!like.senderId) return false
+      if (like.senderId.isSuspended === true) return false
+      if (matchedUserIds.includes(like.senderId._id.toString())) return false
+      return true
+    })
+
+    res.json(filteredLikes)
 
   } catch (error) {
 
@@ -124,11 +179,34 @@ export const getIncomingLikes = async (req, res) => {
 
     const { userId } = req.params
 
+    const user = await User.findById(userId)
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found"
+      })
+    }
+
+    if (user.isSuspended) {
+      return res.status(403).json({
+        message: "Your account has been suspended"
+      })
+    }
+
+    const matchedUserIds = await getMatchedUserIds(userId)
+
     const likes = await Like.find({
       receiverId: userId
-    }).populate("senderId", "email")
+    }).populate("senderId", "email isSuspended")
 
-    res.json(likes)
+    const filteredLikes = likes.filter(like => {
+      if (!like.senderId) return false
+      if (like.senderId.isSuspended === true) return false
+      if (matchedUserIds.includes(like.senderId._id.toString())) return false
+      return true
+    })
+
+    res.json(filteredLikes)
 
   } catch (error) {
 
@@ -168,9 +246,32 @@ export const getIncomingLikesCount = async (req, res) => {
   try {
     const { userId } = req.params
 
-    const count = await Like.countDocuments({
+    const user = await User.findById(userId)
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found"
+      })
+    }
+
+    if (user.isSuspended) {
+      return res.status(403).json({
+        message: "Your account has been suspended"
+      })
+    }
+
+    const matchedUserIds = await getMatchedUserIds(userId)
+
+    const likes = await Like.find({
       receiverId: userId
-    })
+    }).populate("senderId", "_id isSuspended")
+
+    const count = likes.filter(like => {
+      if (!like.senderId) return false
+      if (like.senderId.isSuspended === true) return false
+      if (matchedUserIds.includes(like.senderId._id.toString())) return false
+      return true
+    }).length
 
     res.json({ count })
 

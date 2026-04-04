@@ -15,13 +15,12 @@ import MessageRequests from "./pages/MessageRequests"
 import BlockedUsers from "./pages/BlockedUsers"
 import VerificationRequest from "./pages/VerificationRequest"
 import AdminVerification from "./pages/AdminVerification"
+import AdminReports from "./pages/AdminReports"
 import AccountSettings from "./pages/AccountSettings"
 
 function App() {
-
   return (
     <Routes>
-
       <Route path="/" element={<Login />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
@@ -44,9 +43,9 @@ function App() {
 
       <Route path="/verification-request" element={<VerificationRequest />} />
       <Route path="/admin/verification" element={<AdminVerification />} />
+      <Route path="/admin/reports" element={<AdminReports />} />
 
       <Route path="/settings" element={<AccountSettings />} />
-
     </Routes>
   )
 }

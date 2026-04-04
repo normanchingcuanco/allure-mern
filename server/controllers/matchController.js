@@ -1,6 +1,7 @@
 import mongoose from "mongoose"
 import Match from "../models/Match.js"
 import Message from "../models/Message.js"
+import User from "../models/User.js"
 
 const isValidObjectId = (value) => mongoose.Types.ObjectId.isValid(value)
 
@@ -20,14 +21,32 @@ export const getMatches = async (req, res) => {
       })
     }
 
+    const currentUser = await User.findById(userId)
+
+    if (!currentUser) {
+      return res.status(404).json({
+        message: "User not found"
+      })
+    }
+
+    if (currentUser.isSuspended) {
+      return res.status(403).json({
+        message: "Your account has been suspended"
+      })
+    }
+
     const matches = await Match.find({
       users: new mongoose.Types.ObjectId(userId)
     })
-      .populate("users", "email")
+      .populate("users", "email isSuspended")
       .sort({ updatedAt: -1, _id: -1 })
 
+    const activeMatches = matches.filter(match => {
+      return match.users.every(user => user && user.isSuspended !== true)
+    })
+
     const enrichedMatches = await Promise.all(
-      matches.map(async (match) => {
+      activeMatches.map(async (match) => {
         const otherUser = match.users.find(
           (user) => user._id.toString() !== userId.toString()
         )
@@ -120,5 +139,54 @@ export const unmatchUsers = async (req, res) => {
     res.status(500).json({
       message: "Server error"
     })
+  }
+}
+
+export const getNewMatchesCount = async (req, res) => {
+  try {
+
+    const { userId } = req.params
+
+    const matches = await Match.find({
+      isNewFor: userId
+    })
+
+    res.json({
+      count: matches.length
+    })
+
+  } catch (error) {
+
+    console.error(error)
+
+    res.status(500).json({
+      message: "Server error"
+    })
+
+  }
+}
+
+export const clearNewMatches = async (req, res) => {
+  try {
+
+    const { userId } = req.body
+
+    await Match.updateMany(
+      { isNewFor: userId },
+      { $pull: { isNewFor: userId } }
+    )
+
+    res.json({
+      message: "New matches cleared"
+    })
+
+  } catch (error) {
+
+    console.error(error)
+
+    res.status(500).json({
+      message: "Server error"
+    })
+
   }
 }

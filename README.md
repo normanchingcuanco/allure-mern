@@ -109,7 +109,7 @@ This positions the platform as:
 | Interests & Lifestyle Fields | Users add hobbies and lifestyle preferences | Improve compatibility | Enable smarter match discovery | ✅ Implemented |
 | Relationship Goals Field | Users specify dating intentions | Clarify expectations | Encourage intentional dating | ✅ Implemented |
 | Edit Profile | Users can update their profile details | Maintain profile accuracy | Improve user experience | ✅ Implemented |
-| Update Photos | Users can replace or add profile photos | Improve profile presentation | Encourage profile freshness | ⚠️ Partial |
+| Update Photos | Users can replace or add profile photos | Improve profile presentation | Encourage profile freshness | ⚠️ Partial (URL-based only) |
 
 ---
 
@@ -119,7 +119,7 @@ This positions the platform as:
 | Feature Name | Description | Objective | Purpose | Build Status |
 |------|------|------|------|------|
 | Browse Profiles | Users view other profiles through discovery feed | Enable matchmaking discovery | Allow demand users to explore supply profiles | ✅ Implemented |
-| Discovery Visibility Rules | Prevent showing already liked, blocked, matched, or self profiles | Maintain clean discovery experience | Avoid duplicate profile exposure | ✅ Implemented |
+| Discovery Visibility Rules | Prevent showing already liked, blocked, matched, suspended, or self profiles | Maintain clean discovery experience | Avoid duplicate profile exposure | ✅ Implemented |
 | Demand Discovery Feed | Male users browse female profiles | Enable marketplace demand flow | Allow demand side to explore supply | ✅ Implemented |
 | Profile Detail View | Users open full profile pages | Provide deeper user information | Help users decide on interaction | ✅ Implemented |
 | Search Filters | Users filter profiles by preferences | Improve discovery efficiency | Help users find compatible matches | ✅ Implemented |
@@ -149,7 +149,7 @@ This positions the platform as:
 |------|------|------|------|------|
 | Match Creation | Mutual likes generate a match | Create mutual connections | Unlock messaging | ✅ Implemented |
 | Match List | Users view their matches | Track interactions | Encourage continued engagement | ✅ Implemented |
-| Match Inbox | Match list displays latest message, timestamp, and unread counts | Improve messaging workflow | Provide conversation entry point | ✅ Implemented |
+| Match Inbox | Match list displays latest message, timestamp, unread counts, and new match behavior | Improve messaging workflow | Provide conversation entry point | ✅ Implemented |
 | Unmatch | Users can remove existing matches | Give users control over interactions | Allow users to end unwanted matches | ✅ Implemented |
 | Chat Cleanup on Unmatch | Delete all messages when a match is removed | Maintain privacy and data consistency | Prevent chat history leaks | ✅ Implemented |
 
@@ -201,10 +201,10 @@ This positions the platform as:
 
 | Feature Name | Description | Objective | Purpose | Build Status |
 |------|------|------|------|------|
-| New Match Notification | Notify users when a new match occurs | Improve engagement | Encourage users to start conversations | ⬜ Not Built |
-| Message Notification | Notify users when they receive new messages | Maintain active conversations | Improve responsiveness | ⚠️ Partial (navbar badges + auto-refresh implemented) |
-| Like Notification | Notify users when someone likes their profile | Increase user engagement | Encourage profile interaction | ⚠️ Partial (incoming likes badge implemented) |
-| Verification Status Notification | Notify users when verification is approved or rejected | Improve user feedback loop | Increase trust and transparency | ⚠️ Partial (status visible in settings, no notification trigger) |
+| New Match Notification | Notify users when a new match occurs | Improve engagement | Encourage users to start conversations | ✅ Implemented |
+| Message Notification | Notify users when they receive new messages | Maintain active conversations | Improve responsiveness | ⚠️ Partial (navbar unread badge + polling implemented) |
+| Like Notification | Notify users when someone likes their profile | Increase user engagement | Encourage profile interaction | ⚠️ Partial (incoming likes badge + polling implemented) |
+| Verification Status Notification | Notify users when verification is approved or rejected | Improve user feedback loop | Increase trust and transparency | ⚠️ Partial (status visible in product, no dedicated notification trigger) |
 
 ---
 
@@ -225,9 +225,9 @@ This positions the platform as:
 
 | Feature Name | Description | Objective | Purpose | Build Status |
 |------|------|------|------|------|
-| Report Review System | Admin can review reported users | Maintain platform safety | Remove abusive users | ⚠️ Partial (backend exists, UI not built) |
-| User Suspension | Admin can temporarily suspend accounts | Enforce platform rules | Prevent misuse | ⚠️ Partial (backend exists, not operationalized) |
-| User Deletion | Admin can permanently remove users | Maintain platform integrity | Protect community | ⚠️ Partial (backend exists, not operationalized) |
+| Report Review System | Admin can review reported users and resolve reports | Maintain platform safety | Remove abusive users and close moderation loop | ✅ Implemented |
+| User Suspension | Admin can temporarily suspend accounts | Enforce platform rules | Prevent misuse | ✅ Implemented |
+| User Deletion | Admin can permanently remove users | Maintain platform integrity | Protect community | ✅ Implemented |
 | Verification Review System | Admin can review and approve/reject verification requests | Enable identity verification workflow | Strengthen trust system | ✅ Implemented |
 
 ---

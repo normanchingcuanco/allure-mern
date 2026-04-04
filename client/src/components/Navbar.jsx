@@ -9,70 +9,53 @@ export default function Navbar() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [requestCount, setRequestCount] = useState(0)
   const [incomingLikesCount, setIncomingLikesCount] = useState(0)
+  const [newMatchesCount, setNewMatchesCount] = useState(0)
 
   const userId = localStorage.getItem("userId")
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const res = await api.get(`/profiles/user/${userId}`)
-        setIsVerified(res.data.isVerified)
-      } catch (err) {
-        console.error(err)
-      }
-    }
-
-    if (userId) fetchProfile()
-  }, [userId])
+  const isAdmin = localStorage.getItem("isAdmin") === "true"
 
   useEffect(() => {
     if (!userId) return
 
-    const fetchUnread = async () => {
+    const fetchNavbarData = async () => {
       try {
-        const res = await api.get(`/messages/unread-count/${userId}`)
-        setUnreadCount(res.data.count || 0)
+        const [
+          profileRes,
+          unreadRes,
+          requestRes,
+          incomingLikesRes,
+          newMatchesRes
+        ] = await Promise.all([
+          api.get(`/profiles/user/${userId}`),
+          api.get(`/messages/unread-count/${userId}`),
+          api.get(`/message-requests/count/${userId}`),
+          api.get(`/likes/incoming/count/${userId}`),
+          api.get(`/matches/new-count/${userId}`)
+        ])
+
+        setIsVerified(profileRes.data.isVerified || false)
+        setUnreadCount(unreadRes.data.count || 0)
+        setRequestCount(requestRes.data.count || 0)
+        setIncomingLikesCount(incomingLikesRes.data.count || 0)
+        setNewMatchesCount(newMatchesRes.data.count || 0)
       } catch (err) {
         console.error(err)
       }
     }
 
-    fetchUnread()
+    fetchNavbarData()
 
-    const interval = setInterval(fetchUnread, 5000)
+    const interval = setInterval(() => {
+      fetchNavbarData()
+    }, 5000)
 
     return () => clearInterval(interval)
-  }, [userId])
-
-  useEffect(() => {
-    const fetchRequests = async () => {
-      try {
-        const res = await api.get(`/messages/requests/count/${userId}`)
-        setRequestCount(res.data.count || 0)
-      } catch (err) {
-        console.error(err)
-      }
-    }
-
-    if (userId) fetchRequests()
-  }, [userId])
-
-  useEffect(() => {
-    const fetchIncomingLikes = async () => {
-      try {
-        const res = await api.get(`/likes/incoming/count/${userId}`)
-        setIncomingLikesCount(res.data.count || 0)
-      } catch (err) {
-        console.error(err)
-      }
-    }
-
-    if (userId) fetchIncomingLikes()
   }, [userId])
 
   const handleLogout = () => {
     localStorage.removeItem("token")
     localStorage.removeItem("userId")
+    localStorage.removeItem("isAdmin")
     navigate("/")
   }
 
@@ -93,8 +76,15 @@ export default function Navbar() {
   }
 
   return (
-    <nav style={{ marginBottom: "20px", display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
-
+    <nav
+      style={{
+        marginBottom: "20px",
+        display: "flex",
+        gap: "10px",
+        flexWrap: "wrap",
+        alignItems: "center"
+      }}
+    >
       <Link to="/discover" style={linkStyle}>Discover</Link>
 
       <Link to="/likes" style={linkStyle}>Favorites</Link>
@@ -108,8 +98,8 @@ export default function Navbar() {
 
       <Link to="/matches" style={linkStyle}>
         Matches
-        {unreadCount > 0 && (
-          <span style={badgeStyle}>{unreadCount}</span>
+        {(unreadCount > 0 || newMatchesCount > 0) && (
+          <span style={badgeStyle}>{unreadCount + newMatchesCount}</span>
         )}
       </Link>
 
@@ -125,6 +115,13 @@ export default function Navbar() {
       <Link to="/verification-request" style={linkStyle}>
         Verification {isVerified && "✅"}
       </Link>
+
+      {isAdmin && (
+        <>
+          <Link to="/admin/verification" style={linkStyle}>Admin Verification</Link>
+          <Link to="/admin/reports" style={linkStyle}>Admin Reports</Link>
+        </>
+      )}
 
       <Link to={`/profile/${userId}`} style={linkStyle}>My Profile</Link>
       <Link to="/settings" style={linkStyle}>Settings</Link>
