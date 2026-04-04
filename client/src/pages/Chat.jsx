@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom"
 import api from "../api/axios"
 import { useAuth } from "../context/AuthContext"
 import socket from "../socket"
+import Navbar from "../components/Navbar"
 
 const normalizeId = (value) => {
   if (!value) return ""
@@ -143,27 +144,16 @@ export default function Chat() {
       setTypingUser(false)
     }
 
-    const handleRefresh = async (payload) => {
-      if (!payload?.matchId) return
-      if (payload.matchId !== matchId) return
-
-      if (payload.type === "message_deleted") {
-        await fetchMessages()
-      }
-    }
-
     socket.on("receive_message", handleReceiveMessage)
     socket.on("user_typing", handleUserTyping)
     socket.on("user_stop_typing", handleUserStopTyping)
-    socket.on("notifications_refresh", handleRefresh)
 
     return () => {
       socket.off("receive_message", handleReceiveMessage)
       socket.off("user_typing", handleUserTyping)
       socket.off("user_stop_typing", handleUserStopTyping)
-      socket.off("notifications_refresh", handleRefresh)
     }
-  }, [matchId, userId, markCurrentMatchAsRead, fetchMessages])
+  }, [matchId, userId, markCurrentMatchAsRead])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -213,122 +203,114 @@ export default function Chat() {
     }
   }
 
-  if (error && messages.length === 0) {
-    return (
+  return (
+    <>
+      <Navbar />
+
       <div style={{ padding: "20px" }}>
         <h1>Chat</h1>
-        <p>{error}</p>
-        <button onClick={() => navigate("/matches")}>
-          Back to Matches
-        </button>
-      </div>
-    )
-  }
 
-  return (
-    <div style={{ padding: "20px" }}>
-      <h1>Chat</h1>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            marginBottom: "20px"
+          }}
+        >
+          {receiverPhoto && (
+            <img
+              src={receiverPhoto}
+              alt={receiverName}
+              style={{ width: "50px", height: "50px", borderRadius: "50%" }}
+            />
+          )}
+          <h2>{receiverName}</h2>
+        </div>
 
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "10px",
-          marginBottom: "20px"
-        }}
-      >
-        {receiverPhoto && (
-          <img
-            src={receiverPhoto}
-            alt={receiverName}
-            style={{ width: "50px", height: "50px", borderRadius: "50%" }}
-          />
+        {error && (
+          <p style={{ color: "red" }}>{error}</p>
         )}
-        <h2>{receiverName}</h2>
-      </div>
 
-      {error && (
-        <p style={{ color: "red" }}>{error}</p>
-      )}
+        <div
+          style={{
+            border: "1px solid #ccc",
+            padding: "10px",
+            height: "400px",
+            overflowY: "auto",
+            marginBottom: "10px"
+          }}
+        >
+          {messages.map((msg) => {
+            const sender = normalizeId(msg.senderId)
+            const isMe = sender === normalizeId(userId)
 
-      <div
-        style={{
-          border: "1px solid #ccc",
-          padding: "10px",
-          height: "400px",
-          overflowY: "auto",
-          marginBottom: "10px"
-        }}
-      >
-        {messages.map((msg) => {
-          const sender = normalizeId(msg.senderId)
-          const isMe = sender === normalizeId(userId)
-
-          return (
-            <div
-              key={msg._id || `${msg.text}-${msg.createdAt}`}
-              style={{
-                display: "flex",
-                justifyContent: isMe ? "flex-end" : "flex-start",
-                margin: "10px 0"
-              }}
-            >
+            return (
               <div
+                key={msg._id}
                 style={{
-                  background: isMe ? "#DCF8C6" : "#eee",
-                  padding: "10px",
-                  borderRadius: "10px",
-                  maxWidth: "60%"
+                  display: "flex",
+                  justifyContent: isMe ? "flex-end" : "flex-start",
+                  margin: "10px 0"
                 }}
               >
-                <p style={{ margin: 0 }}>{msg.text}</p>
+                <div
+                  style={{
+                    background: isMe ? "#DCF8C6" : "#eee",
+                    padding: "10px",
+                    borderRadius: "10px",
+                    maxWidth: "60%"
+                  }}
+                >
+                  <p style={{ margin: 0 }}>{msg.text}</p>
 
-                {msg.createdAt && (
-                  <small style={{ fontSize: "10px" }}>
-                    {new Date(msg.createdAt).toLocaleTimeString()}
-                  </small>
-                )}
+                  {msg.createdAt && (
+                    <small style={{ fontSize: "10px" }}>
+                      {new Date(msg.createdAt).toLocaleTimeString()}
+                    </small>
+                  )}
+                </div>
               </div>
-            </div>
-          )
-        })}
+            )
+          })}
 
-        <div ref={bottomRef}></div>
+          <div ref={bottomRef}></div>
+        </div>
+
+        {typingUser && (
+          <p style={{ fontStyle: "italic", color: "#666" }}>
+            {receiverName} is typing...
+          </p>
+        )}
+
+        <div style={{ display: "flex", gap: "10px" }}>
+          <input
+            value={text}
+            onChange={(e) => {
+              const value = e.target.value
+              setText(value)
+
+              socket.emit("typing", { matchId })
+
+              if (!value.trim()) {
+                socket.emit("stop_typing", { matchId })
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && text.trim() && !sending) {
+                e.preventDefault()
+                sendMessage()
+              }
+            }}
+            placeholder="Type message"
+            style={{ flex: 1, padding: "10px" }}
+          />
+
+          <button onClick={sendMessage} disabled={sending}>
+            {sending ? "Sending..." : "Send"}
+          </button>
+        </div>
       </div>
-
-      {typingUser && (
-        <p style={{ fontStyle: "italic", color: "#666" }}>
-          {receiverName} is typing...
-        </p>
-      )}
-
-      <div style={{ display: "flex", gap: "10px" }}>
-        <input
-          value={text}
-          onChange={(e) => {
-            const value = e.target.value
-            setText(value)
-
-            socket.emit("typing", { matchId })
-
-            if (!value.trim()) {
-              socket.emit("stop_typing", { matchId })
-            }
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && text.trim() && !sending) {
-              e.preventDefault()
-              sendMessage()
-            }
-          }}
-          placeholder="Type message"
-          style={{ flex: 1, padding: "10px" }}
-        />
-
-        <button onClick={sendMessage} disabled={sending}>
-          {sending ? "Sending..." : "Send"}
-        </button>
-      </div>
-    </div>
+    </>
   )
 }

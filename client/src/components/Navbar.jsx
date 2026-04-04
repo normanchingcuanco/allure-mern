@@ -1,162 +1,316 @@
-import { Link, useNavigate, useLocation } from "react-router-dom"
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useRef, useCallback } from "react"
+import { useParams, useNavigate } from "react-router-dom"
 import api from "../api/axios"
+import { useAuth } from "../context/AuthContext"
 import socket from "../socket"
+import Navbar from "../components/Navbar"
 
-export default function Navbar() {
+const normalizeId = (value) => {
+  if (!value) return ""
+  if (typeof value === "object") {
+    return value._id?.toString?.() || value.toString?.() || ""
+  }
+  return value.toString()
+}
+
+export default function Chat() {
+  const auth = useAuth()
+  const userId = auth?.userId || localStorage.getItem("userId")
+  const { matchId } = useParams()
   const navigate = useNavigate()
-  const location = useLocation()
 
-  const [isVerified, setIsVerified] = useState(false)
-  const [unreadCount, setUnreadCount] = useState(0)
-  const [requestCount, setRequestCount] = useState(0)
-  const [incomingLikesCount, setIncomingLikesCount] = useState(0)
-  const [newMatchesCount, setNewMatchesCount] = useState(0)
+  const [messages, setMessages] = useState([])
+  const [receiverName, setReceiverName] = useState("")
+  const [receiverPhoto, setReceiverPhoto] = useState("")
+  const [text, setText] = useState("")
+  const [typingUser, setTypingUser] = useState(false)
+  const [error, setError] = useState("")
+  const [sending, setSending] = useState(false)
 
-  const userId = localStorage.getItem("userId")
-  const isAdmin = localStorage.getItem("isAdmin") === "true"
+  const bottomRef = useRef(null)
 
-  const fetchNavbarData = useCallback(async () => {
-    if (!userId) return
+  const markCurrentMatchAsRead = useCallback(async () => {
+    if (!matchId || !userId) return
 
     try {
-      const [
-        profileRes,
-        unreadRes,
-        requestRes,
-        incomingLikesRes,
-        newMatchesRes
-      ] = await Promise.all([
-        api.get(`/profiles/user/${userId}`),
-        api.get(`/messages/unread-count/${userId}`),
-        api.get(`/message-requests/count/${userId}`),
-        api.get(`/likes/incoming/count/${userId}`),
-        api.get(`/matches/new-count/${userId}`)
-      ])
-
-      setIsVerified(profileRes.data.isVerified || false)
-      setUnreadCount(Number(unreadRes.data.count || 0))
-      setRequestCount(Number(requestRes.data.count || 0))
-      setIncomingLikesCount(Number(incomingLikesRes.data.count || 0))
-      setNewMatchesCount(Number(newMatchesRes.data.count || 0))
+      await api.patch("/messages/read", {
+        matchId,
+        userId
+      })
     } catch (err) {
-      console.error(err)
+      console.error("Mark read error:", err)
     }
-  }, [userId])
+  }, [matchId, userId])
 
-  useEffect(() => {
-    if (!userId) return
+  const fetchMessages = useCallback(async () => {
+    if (!userId || !matchId) return
 
-    fetchNavbarData()
-    socket.emit("register_user", userId)
+    try {
+      setError("")
 
-    const handleRefresh = () => {
-      fetchNavbarData()
-    }
+      const res = await api.get(`/messages/${matchId}`, {
+        params: { userId }
+      })
 
-    const handleNewMessage = (payload) => {
-      if (!payload) return
+      setMessages(Array.isArray(res.data) ? res.data : [])
+    } catch (err) {
+      console.error("Fetch messages error:", err)
 
-      const receiverId =
-        payload.receiverId?.toString?.() || payload.receiverId || ""
-
-      if (receiverId !== userId) return
-
-      const isChatPage = location.pathname.startsWith("/chat/")
-
-      if (!isChatPage) {
-        setUnreadCount((prev) => prev + 1)
+      if (err.response?.status === 403) {
+        setError("You are not authorized to view this chat.")
+        setMessages([])
+        return
       }
 
-      fetchNavbarData()
-    }
+      if (err.response?.status === 404) {
+        setError("Chat not found.")
+        setMessages([])
+        return
+      }
 
-    socket.on("notifications_refresh", handleRefresh)
-    socket.on("new_message", handleNewMessage)
+      setError("Failed to load messages.")
+    }
+  }, [matchId, userId])
+
+  const fetchMatch = useCallback(async () => {
+    if (!userId || !matchId) return
+
+    try {
+      const res = await api.get(`/matches/${userId}`)
+
+      const match = Array.isArray(res.data)
+        ? res.data.find((m) => m._id === matchId)
+        : null
+
+      if (!match) return
+
+      setReceiverName(match?.otherUser?.email || "User")
+
+      if (match?.otherUser?._id) {
+        try {
+          const profileRes = await api.get(`/profiles/user/${match.otherUser._id}`)
+          const profile = profileRes.data
+
+          setReceiverPhoto(profile?.photos?.[0] || "")
+          setReceiverName(profile?.name || match?.otherUser?.email || "User")
+        } catch (profileError) {
+          console.error("Fetch receiver profile error:", profileError)
+        }
+      }
+    } catch (err) {
+      console.error("Fetch match error:", err)
+    }
+  }, [userId, matchId])
+
+  useEffect(() => {
+    if (!userId || !matchId) return
+
+    fetchMessages()
+    fetchMatch()
+    markCurrentMatchAsRead()
+
+    socket.emit("register_user", userId)
+    socket.emit("join_match", matchId)
 
     return () => {
-      socket.off("notifications_refresh", handleRefresh)
-      socket.off("new_message", handleNewMessage)
+      socket.emit("leave_match", matchId)
     }
-  }, [userId, fetchNavbarData, location.pathname])
+  }, [matchId, userId, fetchMessages, fetchMatch, markCurrentMatchAsRead])
 
-  const handleLogout = () => {
-    localStorage.removeItem("token")
-    localStorage.removeItem("userId")
-    localStorage.removeItem("isAdmin")
-    navigate("/")
-  }
+  useEffect(() => {
+    if (!matchId || !userId) return
 
-  const badgeStyle = {
-    background: "red",
-    color: "white",
-    borderRadius: "999px",
-    padding: "2px 6px",
-    fontSize: "12px",
-    marginLeft: "6px",
-    display: "inline-block",
-    minWidth: "18px",
-    textAlign: "center"
-  }
+    const handleReceiveMessage = async (data) => {
+      if (data.matchId !== matchId) return
 
-  const linkStyle = {
-    textDecoration: "none"
+      setMessages((prev) => {
+        const exists = prev.some((msg) => msg._id === data.message?._id)
+        if (exists) return prev
+        return [...prev, data.message]
+      })
+
+      const incomingSenderId = normalizeId(data.message?.senderId)
+
+      if (incomingSenderId && incomingSenderId !== normalizeId(userId)) {
+        await markCurrentMatchAsRead()
+      }
+    }
+
+    const handleUserTyping = () => {
+      setTypingUser(true)
+    }
+
+    const handleUserStopTyping = () => {
+      setTypingUser(false)
+    }
+
+    socket.on("receive_message", handleReceiveMessage)
+    socket.on("user_typing", handleUserTyping)
+    socket.on("user_stop_typing", handleUserStopTyping)
+
+    return () => {
+      socket.off("receive_message", handleReceiveMessage)
+      socket.off("user_typing", handleUserTyping)
+      socket.off("user_stop_typing", handleUserStopTyping)
+    }
+  }, [matchId, userId, markCurrentMatchAsRead])
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages])
+
+  const sendMessage = async () => {
+    if (!text.trim() || sending) return
+
+    try {
+      setSending(true)
+      setError("")
+
+      const trimmedText = text.trim()
+
+      const res = await api.post("/messages", {
+        matchId,
+        senderId: userId,
+        text: trimmedText
+      })
+
+      const message = res.data.data
+
+      setMessages((prev) => {
+        const exists = prev.some((msg) => msg._id === message?._id)
+        if (exists) return prev
+        return [...prev, message]
+      })
+
+      socket.emit("stop_typing", { matchId })
+      setText("")
+    } catch (err) {
+      console.error("Send message error:", err)
+
+      if (err.response?.status === 403) {
+        setError("You are not authorized to send messages in this chat.")
+        return
+      }
+
+      if (err.response?.status === 404) {
+        setError("Chat not found.")
+        return
+      }
+
+      setError(err.response?.data?.message || "Failed to send message.")
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
-    <nav
-      style={{
-        marginBottom: "20px",
-        display: "flex",
-        gap: "10px",
-        flexWrap: "wrap",
-        alignItems: "center"
-      }}
-    >
-      <Link to="/discover" style={linkStyle}>Discover</Link>
+    <>
+      <Navbar />
 
-      <Link to="/likes" style={linkStyle}>Favorites</Link>
+      <div style={{ padding: "20px" }}>
+        <h1>Chat</h1>
 
-      <Link to="/incoming-likes" style={linkStyle}>
-        Incoming Likes
-        {incomingLikesCount > 0 && (
-          <span style={badgeStyle}>{incomingLikesCount}</span>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            marginBottom: "20px"
+          }}
+        >
+          {receiverPhoto && (
+            <img
+              src={receiverPhoto}
+              alt={receiverName}
+              style={{ width: "50px", height: "50px", borderRadius: "50%" }}
+            />
+          )}
+          <h2>{receiverName}</h2>
+        </div>
+
+        {error && (
+          <p style={{ color: "red" }}>{error}</p>
         )}
-      </Link>
 
-      <Link to="/matches" style={linkStyle}>
-        Matches
-        {(unreadCount > 0 || newMatchesCount > 0) && (
-          <span style={badgeStyle}>{unreadCount + newMatchesCount}</span>
+        <div
+          style={{
+            border: "1px solid #ccc",
+            padding: "10px",
+            height: "400px",
+            overflowY: "auto",
+            marginBottom: "10px"
+          }}
+        >
+          {messages.map((msg) => {
+            const sender = normalizeId(msg.senderId)
+            const isMe = sender === normalizeId(userId)
+
+            return (
+              <div
+                key={msg._id}
+                style={{
+                  display: "flex",
+                  justifyContent: isMe ? "flex-end" : "flex-start",
+                  margin: "10px 0"
+                }}
+              >
+                <div
+                  style={{
+                    background: isMe ? "#DCF8C6" : "#eee",
+                    padding: "10px",
+                    borderRadius: "10px",
+                    maxWidth: "60%"
+                  }}
+                >
+                  <p style={{ margin: 0 }}>{msg.text}</p>
+
+                  {msg.createdAt && (
+                    <small style={{ fontSize: "10px" }}>
+                      {new Date(msg.createdAt).toLocaleTimeString()}
+                    </small>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+
+          <div ref={bottomRef}></div>
+        </div>
+
+        {typingUser && (
+          <p style={{ fontStyle: "italic", color: "#666" }}>
+            {receiverName} is typing...
+          </p>
         )}
-      </Link>
 
-      <Link to="/message-requests" style={linkStyle}>
-        Message Requests
-        {requestCount > 0 && (
-          <span style={badgeStyle}>{requestCount}</span>
-        )}
-      </Link>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <input
+            value={text}
+            onChange={(e) => {
+              const value = e.target.value
+              setText(value)
 
-      <Link to="/blocked-users" style={linkStyle}>Blocked Users</Link>
+              socket.emit("typing", { matchId })
 
-      <Link to="/verification-request" style={linkStyle}>
-        Verification {isVerified && "✅"}
-      </Link>
+              if (!value.trim()) {
+                socket.emit("stop_typing", { matchId })
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && text.trim() && !sending) {
+                e.preventDefault()
+                sendMessage()
+              }
+            }}
+            placeholder="Type message"
+            style={{ flex: 1, padding: "10px" }}
+          />
 
-      {isAdmin && (
-        <>
-          <Link to="/admin/verification" style={linkStyle}>Admin Verification</Link>
-          <Link to="/admin/reports" style={linkStyle}>Admin Reports</Link>
-        </>
-      )}
-
-      <Link to={`/profile/${userId}`} style={linkStyle}>My Profile</Link>
-      <Link to="/settings" style={linkStyle}>Settings</Link>
-
-      <button onClick={handleLogout}>
-        Logout
-      </button>
-    </nav>
+          <button onClick={sendMessage} disabled={sending}>
+            {sending ? "Sending..." : "Send"}
+          </button>
+        </div>
+      </div>
+    </>
   )
 }

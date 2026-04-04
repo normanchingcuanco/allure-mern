@@ -1,7 +1,7 @@
 import mongoose from "mongoose"
 import Message from "../models/Message.js"
 import Match from "../models/Match.js"
-import { emitToMatch, emitToUsers } from "../socket.js"
+import { emitToMatch, emitToUser, emitToUsers } from "../socket.js"
 
 const isUserInMatch = (match, userId) => {
   return match.users.some((user) => user.toString() === userId.toString())
@@ -73,10 +73,18 @@ export const sendMessage = async (req, res) => {
       message
     })
 
-    emitNotificationRefresh([receiverId], {
-      type: "new_message",
+    emitToUser(receiverId, "new_message", {
       matchId: matchId.toString(),
-      senderId: senderId.toString()
+      senderId: senderId.toString(),
+      receiverId: receiverId.toString(),
+      messageId: message._id.toString()
+    })
+
+    emitNotificationRefresh([senderId, receiverId], {
+      type: "message_sent",
+      matchId: matchId.toString(),
+      senderId: senderId.toString(),
+      receiverId: receiverId.toString()
     })
 
     res.json({
