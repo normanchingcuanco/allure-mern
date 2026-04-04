@@ -2,6 +2,8 @@ import mongoose from "mongoose"
 import Match from "../models/Match.js"
 import Message from "../models/Message.js"
 import User from "../models/User.js"
+import Like from "../models/Like.js"
+import { emitToUsers } from "../socket.js"
 
 const isValidObjectId = (value) => mongoose.Types.ObjectId.isValid(value)
 
@@ -127,8 +129,29 @@ export const unmatchUsers = async (req, res) => {
       })
     }
 
+    const participantIds = match.users.map((id) => id.toString())
+
     await Message.deleteMany({ matchId: match._id })
+
+    await Like.deleteMany({
+      $or: [
+        {
+          senderId: participantIds[0],
+          receiverId: participantIds[1]
+        },
+        {
+          senderId: participantIds[1],
+          receiverId: participantIds[0]
+        }
+      ]
+    })
+
     await Match.findByIdAndDelete(matchId)
+
+    emitToUsers(participantIds, "notifications_refresh", {
+      type: "match_removed",
+      matchId
+    })
 
     res.json({
       message: "Unmatched successfully"
@@ -144,7 +167,6 @@ export const unmatchUsers = async (req, res) => {
 
 export const getNewMatchesCount = async (req, res) => {
   try {
-
     const { userId } = req.params
 
     const matches = await Match.find({
@@ -154,21 +176,17 @@ export const getNewMatchesCount = async (req, res) => {
     res.json({
       count: matches.length
     })
-
   } catch (error) {
-
     console.error(error)
 
     res.status(500).json({
       message: "Server error"
     })
-
   }
 }
 
 export const clearNewMatches = async (req, res) => {
   try {
-
     const { userId } = req.body
 
     await Match.updateMany(
@@ -179,14 +197,11 @@ export const clearNewMatches = async (req, res) => {
     res.json({
       message: "New matches cleared"
     })
-
   } catch (error) {
-
     console.error(error)
 
     res.status(500).json({
       message: "Server error"
     })
-
   }
 }

@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react"
-import { useParams } from "react-router-dom"
+import { useEffect, useState, useCallback } from "react"
+import { useNavigate, useParams } from "react-router-dom"
 import api from "../api/axios"
 import Navbar from "../components/Navbar"
+import socket from "../socket"
 
 export default function Profile() {
   const { userId } = useParams()
+  const navigate = useNavigate()
 
   const [profile, setProfile] = useState(null)
   const [reportReason, setReportReason] = useState("")
@@ -12,21 +14,85 @@ export default function Profile() {
   const [message, setMessage] = useState("")
   const [blocking, setBlocking] = useState(false)
   const [sendingRequest, setSendingRequest] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [accessError, setAccessError] = useState("")
 
   const currentUserId = localStorage.getItem("userId")
 
+  const fetchProfile = useCallback(async () => {
+    try {
+      setLoading(true)
+      setAccessError("")
+
+      const res = await api.get(`/profiles/user/${userId}`, {
+        params: {
+          viewerId: currentUserId
+        }
+      })
+
+      setProfile(res.data)
+    } catch (err) {
+      console.error(err)
+      setProfile(null)
+      setAccessError(err.response?.data?.message || "Failed to load profile")
+    } finally {
+      setLoading(false)
+    }
+  }, [userId, currentUserId])
+
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const res = await api.get(`/profiles/user/${userId}`)
-        setProfile(res.data)
-      } catch (err) {
-        console.error(err)
+    fetchProfile()
+  }, [fetchProfile])
+
+  // 🔥 REALTIME SOCKET LISTENER
+  useEffect(() => {
+    if (!currentUserId) return
+
+    socket.emit("register_user", currentUserId)
+
+    const handleRefresh = async (payload) => {
+      console.log("Profile socket event:", payload)
+
+      if (!payload) return
+
+      const isRelevant =
+        payload.blockerId === currentUserId ||
+        payload.blockedId === currentUserId
+
+      if (!isRelevant) return
+
+      await fetchProfile()
+
+      // immediate UI enforcement
+      if (
+        payload.type === "user_blocked" &&
+        payload.blockedId === currentUserId
+      ) {
+        setAccessError("You cannot view this profile")
+        setProfile(null)
       }
     }
 
-    fetchProfile()
-  }, [userId])
+    socket.on("notifications_refresh", handleRefresh)
+
+    return () => {
+      socket.off("notifications_refresh", handleRefresh)
+    }
+  }, [currentUserId, fetchProfile])
+
+  // 🔥 FALLBACK (prevents missed socket events)
+  useEffect(() => {
+    const handleFocus = () => {
+      console.log("Profile focus refresh")
+      fetchProfile()
+    }
+
+    window.addEventListener("focus", handleFocus)
+
+    return () => {
+      window.removeEventListener("focus", handleFocus)
+    }
+  }, [fetchProfile])
 
   const sendMessageRequest = async () => {
     if (!message.trim()) {
@@ -68,7 +134,6 @@ export default function Profile() {
       })
 
       alert("Report submitted")
-
       setReportReason("")
       setReportDescription("")
     } catch (err) {
@@ -89,12 +154,38 @@ export default function Profile() {
       })
 
       alert("User blocked")
+
+      setTimeout(() => {
+        navigate("/blocked-users")
+      }, 100)
+
     } catch (error) {
       console.error(error)
       alert(error.response?.data?.message || "Failed to block user")
     } finally {
       setBlocking(false)
     }
+  }
+
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <p>Loading...</p>
+      </>
+    )
+  }
+
+  if (accessError && currentUserId !== userId) {
+    return (
+      <>
+        <Navbar />
+        <div style={{ padding: "20px" }}>
+          <h2>Profile unavailable</h2>
+          <p>{accessError}</p>
+        </div>
+      </>
+    )
   }
 
   if (!profile) {
@@ -106,7 +197,6 @@ export default function Profile() {
     )
   }
 
-  // ✅ UPDATED BLOCK
   if (currentUserId === userId) {
     return (
       <>
@@ -154,7 +244,6 @@ export default function Profile() {
       </h1>
 
       <p>Age: {profile.age}</p>
-
       <p>{profile.bio}</p>
 
       <h3>Interests</h3>
@@ -165,18 +254,12 @@ export default function Profile() {
       </ul>
 
       <p>Lifestyle: {profile.lifestyle}</p>
-
       <p>Relationship Goals: {profile.relationshipGoals}</p>
 
       <h3>Photos</h3>
 
       {(profile.photos || []).map((photo, index) => (
-        <img
-          key={`${photo}-${index}`}
-          src={photo}
-          width="200"
-          alt="profile"
-        />
+        <img key={`${photo}-${index}`} src={photo} width="200" alt="profile" />
       ))}
 
       <hr />

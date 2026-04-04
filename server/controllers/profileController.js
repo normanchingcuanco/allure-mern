@@ -121,7 +121,6 @@ export const discoverProfiles = async (req, res) => {
       return res.status(403).json({ message: "Your account has been suspended" })
     }
 
-    /* Female users see incoming likes */
     if (currentUser.gender === "female") {
       const likes = await Like.find({ receiverId: userId })
         .populate({
@@ -141,11 +140,9 @@ export const discoverProfiles = async (req, res) => {
       })
     }
 
-    /* Male users browse profiles */
     const likes = await Like.find({ senderId: userId })
     const likedUserIds = likes.map(like => like.receiverId.toString())
 
-    /* Get blocked users */
     const blocks = await Block.find({
       $or: [
         { blockerId: userId },
@@ -291,6 +288,7 @@ export const deleteAccount = async (req, res) => {
 export const getMyProfile = async (req, res) => {
   try {
     const { userId } = req.params
+    const { viewerId } = req.query
 
     const profile = await Profile.findOne({ userId })
       .populate("userId", "email gender isSuspended")
@@ -305,6 +303,30 @@ export const getMyProfile = async (req, res) => {
       return res.status(404).json({
         message: "Profile not found"
       })
+    }
+
+    if (
+      viewerId &&
+      viewerId.toString() !== userId.toString()
+    ) {
+      const block = await Block.findOne({
+        $or: [
+          {
+            blockerId: viewerId,
+            blockedId: userId
+          },
+          {
+            blockerId: userId,
+            blockedId: viewerId
+          }
+        ]
+      })
+
+      if (block) {
+        return res.status(403).json({
+          message: "You cannot view this profile"
+        })
+      }
     }
 
     res.json(profile)

@@ -10,8 +10,11 @@ export const initSocket = (httpServer) => {
   })
 
   ioInstance.on("connection", (socket) => {
+    console.log(`Socket connected: ${socket.id}`)
+
     socket.on("register_user", (userId) => {
       if (!userId) return
+      console.log("register_user:", userId, "socket:", socket.id)
       socket.join(`user:${userId}`)
     })
 
@@ -40,8 +43,8 @@ export const initSocket = (httpServer) => {
       socket.to(`match:${data.matchId}`).emit("user_stop_typing", data)
     })
 
-    socket.on("disconnect", () => {
-      console.log("User disconnected")
+    socket.on("disconnect", (reason) => {
+      console.log(`Socket disconnected: ${socket.id} | Reason: ${reason}`)
     })
   })
 
@@ -52,15 +55,19 @@ export const getIo = () => ioInstance
 
 export const emitToUser = (userId, eventName, payload = {}) => {
   if (!ioInstance || !userId || !eventName) return
+  console.log("emitToUser ->", userId, eventName, payload)
   ioInstance.to(`user:${userId}`).emit(eventName, payload)
 }
 
 export const emitToUsers = (userIds = [], eventName, payload = {}) => {
   if (!ioInstance || !eventName) return
 
-  const uniqueUserIds = [...new Set(userIds.map((id) => id?.toString()).filter(Boolean))]
+  const uniqueUserIds = [
+    ...new Set(userIds.map((id) => id?.toString()).filter(Boolean))
+  ]
 
   uniqueUserIds.forEach((userId) => {
+    console.log("emitToUsers ->", userId, eventName, payload)
     ioInstance.to(`user:${userId}`).emit(eventName, payload)
   })
 }
