@@ -1,9 +1,11 @@
-import { Link, useNavigate } from "react-router-dom"
-import { useEffect, useState } from "react"
+import { Link, useNavigate, useLocation } from "react-router-dom"
+import { useEffect, useState, useCallback } from "react"
 import api from "../api/axios"
+import socket from "../socket"
 
 export default function Navbar() {
   const navigate = useNavigate()
+  const location = useLocation()
 
   const [isVerified, setIsVerified] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
@@ -14,43 +16,69 @@ export default function Navbar() {
   const userId = localStorage.getItem("userId")
   const isAdmin = localStorage.getItem("isAdmin") === "true"
 
+  const fetchNavbarData = useCallback(async () => {
+    if (!userId) return
+
+    try {
+      const [
+        profileRes,
+        unreadRes,
+        requestRes,
+        incomingLikesRes,
+        newMatchesRes
+      ] = await Promise.all([
+        api.get(`/profiles/user/${userId}`),
+        api.get(`/messages/unread-count/${userId}`),
+        api.get(`/message-requests/count/${userId}`),
+        api.get(`/likes/incoming/count/${userId}`),
+        api.get(`/matches/new-count/${userId}`)
+      ])
+
+      setIsVerified(profileRes.data.isVerified || false)
+      setUnreadCount(Number(unreadRes.data.count || 0))
+      setRequestCount(Number(requestRes.data.count || 0))
+      setIncomingLikesCount(Number(incomingLikesRes.data.count || 0))
+      setNewMatchesCount(Number(newMatchesRes.data.count || 0))
+    } catch (err) {
+      console.error(err)
+    }
+  }, [userId])
+
   useEffect(() => {
     if (!userId) return
 
-    const fetchNavbarData = async () => {
-      try {
-        const [
-          profileRes,
-          unreadRes,
-          requestRes,
-          incomingLikesRes,
-          newMatchesRes
-        ] = await Promise.all([
-          api.get(`/profiles/user/${userId}`),
-          api.get(`/messages/unread-count/${userId}`),
-          api.get(`/message-requests/count/${userId}`),
-          api.get(`/likes/incoming/count/${userId}`),
-          api.get(`/matches/new-count/${userId}`)
-        ])
+    fetchNavbarData()
+    socket.emit("register_user", userId)
 
-        setIsVerified(profileRes.data.isVerified || false)
-        setUnreadCount(unreadRes.data.count || 0)
-        setRequestCount(requestRes.data.count || 0)
-        setIncomingLikesCount(incomingLikesRes.data.count || 0)
-        setNewMatchesCount(newMatchesRes.data.count || 0)
-      } catch (err) {
-        console.error(err)
-      }
+    const handleRefresh = () => {
+      fetchNavbarData()
     }
 
-    fetchNavbarData()
+    const handleNewMessage = (payload) => {
+      if (!payload) return
 
-    const interval = setInterval(() => {
+      const receiverId =
+        payload.receiverId?.toString?.() || payload.receiverId || ""
+
+      if (receiverId !== userId) return
+
+      const isChatPage = location.pathname.startsWith("/chat/")
+
+      if (!isChatPage) {
+        setUnreadCount((prev) => prev + 1)
+      }
+
       fetchNavbarData()
-    }, 5000)
+    }
 
-    return () => clearInterval(interval)
-  }, [userId])
+    socket.on("notifications_refresh", handleRefresh)
+    socket.on("new_message", handleNewMessage)
+
+    return () => {
+      socket.off("notifications_refresh", handleRefresh)
+      socket.off("new_message", handleNewMessage)
+    }
+  }, [userId, fetchNavbarData, location.pathname])
 
   const handleLogout = () => {
     localStorage.removeItem("token")

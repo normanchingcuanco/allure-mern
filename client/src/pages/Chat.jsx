@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useCallback } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import api from "../api/axios"
 import { useAuth } from "../context/AuthContext"
@@ -28,7 +28,7 @@ export default function Chat() {
 
   const bottomRef = useRef(null)
 
-  const markCurrentMatchAsRead = async () => {
+  const markCurrentMatchAsRead = useCallback(async () => {
     if (!matchId || !userId) return
 
     try {
@@ -39,73 +39,94 @@ export default function Chat() {
     } catch (err) {
       console.error("Mark read error:", err)
     }
-  }
+  }, [matchId, userId])
+
+  const fetchMessages = useCallback(async () => {
+    if (!userId || !matchId) return
+
+    try {
+      setError("")
+
+      const res = await api.get(`/messages/${matchId}`, {
+        params: { userId }
+      })
+
+      setMessages(Array.isArray(res.data) ? res.data : [])
+    } catch (err) {
+      console.error("Fetch messages error:", err)
+
+      if (err.response?.status === 403) {
+        setError("You are not authorized to view this chat.")
+        setMessages([])
+        return
+      }
+
+      if (err.response?.status === 404) {
+        setError("Chat not found.")
+        setMessages([])
+        return
+      }
+
+      setError("Failed to load messages.")
+    }
+  }, [matchId, userId])
+
+  const fetchMatch = useCallback(async () => {
+    if (!userId || !matchId) return
+
+    try {
+      const res = await api.get(`/matches/${userId}`)
+
+      const match = Array.isArray(res.data)
+        ? res.data.find((m) => m._id === matchId)
+        : null
+
+      if (!match) return
+
+      setReceiverName(match?.otherUser?.email || "User")
+
+      if (match?.otherUser?._id) {
+        try {
+          const profileRes = await api.get(`/profiles/user/${match.otherUser._id}`)
+          const profile = profileRes.data
+
+          setReceiverPhoto(profile?.photos?.[0] || "")
+          setReceiverName(profile?.name || match?.otherUser?.email || "User")
+        } catch (profileError) {
+          console.error("Fetch receiver profile error:", profileError)
+        }
+      }
+    } catch (err) {
+      console.error("Fetch match error:", err)
+    }
+  }, [userId, matchId])
 
   useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        setError("")
-
-        const res = await api.get(`/messages/${matchId}`, {
-          params: { userId }
-        })
-
-        setMessages(Array.isArray(res.data) ? res.data : [])
-
-        await markCurrentMatchAsRead()
-      } catch (err) {
-        console.error("Fetch messages error:", err)
-
-        if (err.response?.status === 403) {
-          setError("You are not authorized to view this chat.")
-          setMessages([])
-          return
-        }
-
-        if (err.response?.status === 404) {
-          setError("Chat not found.")
-          setMessages([])
-          return
-        }
-
-        setError("Failed to load messages.")
-      }
-    }
-
-    const fetchMatch = async () => {
-      try {
-        const res = await api.get(`/matches/${userId}`)
-
-        const match = Array.isArray(res.data)
-          ? res.data.find((m) => m.matchId === matchId)
-          : null
-
-        if (!match) return
-
-        setReceiverName(match.name || "")
-        setReceiverPhoto(match.photo || "")
-      } catch (err) {
-        console.error("Fetch match error:", err)
-      }
-    }
-
     if (!userId || !matchId) return
 
     fetchMessages()
     fetchMatch()
+    markCurrentMatchAsRead()
 
-    if (socket) {
-      socket.emit("join_match", matchId)
+    socket.emit("register_user", userId)
+    socket.emit("join_match", matchId)
+
+    return () => {
+      socket.emit("leave_match", matchId)
     }
-  }, [matchId, userId])
+  }, [matchId, userId, fetchMessages, fetchMatch, markCurrentMatchAsRead])
 
   useEffect(() => {
-    if (!socket || !matchId || !userId) return
+    if (!matchId || !userId) return
 
     const handleReceiveMessage = async (data) => {
       if (data.matchId !== matchId) return
 
-      setMessages((prev) => [...prev, data.message])
+      setMessages((prev) => {
+        const exists = prev.some((msg) => msg._id === data.message?._id)
+        if (exists) return prev
+        return [...prev, data.message]
+      })
 
       const incomingSenderId = normalizeId(data.message?.senderId)
 
@@ -122,16 +143,27 @@ export default function Chat() {
       setTypingUser(false)
     }
 
+    const handleRefresh = async (payload) => {
+      if (!payload?.matchId) return
+      if (payload.matchId !== matchId) return
+
+      if (payload.type === "message_deleted") {
+        await fetchMessages()
+      }
+    }
+
     socket.on("receive_message", handleReceiveMessage)
     socket.on("user_typing", handleUserTyping)
     socket.on("user_stop_typing", handleUserStopTyping)
+    socket.on("notifications_refresh", handleRefresh)
 
     return () => {
       socket.off("receive_message", handleReceiveMessage)
       socket.off("user_typing", handleUserTyping)
       socket.off("user_stop_typing", handleUserStopTyping)
+      socket.off("notifications_refresh", handleRefresh)
     }
-  }, [matchId, userId])
+  }, [matchId, userId, markCurrentMatchAsRead, fetchMessages])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -154,17 +186,13 @@ export default function Chat() {
 
       const message = res.data.data
 
-      setMessages((prev) => [...prev, message])
+      setMessages((prev) => {
+        const exists = prev.some((msg) => msg._id === message?._id)
+        if (exists) return prev
+        return [...prev, message]
+      })
 
-      if (socket) {
-        socket.emit("send_message", {
-          matchId,
-          message
-        })
-
-        socket.emit("stop_typing", { matchId })
-      }
-
+      socket.emit("stop_typing", { matchId })
       setText("")
     } catch (err) {
       console.error("Send message error:", err)
@@ -281,12 +309,10 @@ export default function Chat() {
             const value = e.target.value
             setText(value)
 
-            if (socket) {
-              socket.emit("typing", { matchId })
+            socket.emit("typing", { matchId })
 
-              if (!value.trim()) {
-                socket.emit("stop_typing", { matchId })
-              }
+            if (!value.trim()) {
+              socket.emit("stop_typing", { matchId })
             }
           }}
           onKeyDown={(e) => {

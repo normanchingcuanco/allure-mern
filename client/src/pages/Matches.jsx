@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { Link } from "react-router-dom"
 import api from "../api/axios"
 import Navbar from "../components/Navbar"
 import { useAuth } from "../context/AuthContext"
+import socket from "../socket"
 
 export default function Matches() {
   const auth = useAuth()
@@ -12,7 +13,7 @@ export default function Matches() {
   const [loading, setLoading] = useState(true)
   const [unmatchingId, setUnmatchingId] = useState("")
 
-  const fetchMatches = async () => {
+  const fetchMatches = useCallback(async () => {
     if (!userId) {
       setLoading(false)
       return
@@ -37,21 +38,14 @@ export default function Matches() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [userId])
 
   useEffect(() => {
     if (!userId) return
 
     fetchMatches()
+    socket.emit("register_user", userId)
 
-    const interval = setInterval(() => {
-      fetchMatches()
-    }, 3000)
-
-    return () => clearInterval(interval)
-  }, [userId])
-
-  useEffect(() => {
     const clearNewMatches = async () => {
       try {
         await api.patch("/matches/clear-new", {
@@ -62,8 +56,18 @@ export default function Matches() {
       }
     }
 
-    if (userId) clearNewMatches()
-  }, [userId])
+    clearNewMatches()
+
+    const handleRefresh = () => {
+      fetchMatches()
+    }
+
+    socket.on("notifications_refresh", handleRefresh)
+
+    return () => {
+      socket.off("notifications_refresh", handleRefresh)
+    }
+  }, [userId, fetchMatches])
 
   const handleUnmatch = async (matchId) => {
     const confirmed = window.confirm("Are you sure you want to unmatch?")

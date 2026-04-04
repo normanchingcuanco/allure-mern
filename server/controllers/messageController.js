@@ -1,9 +1,14 @@
 import mongoose from "mongoose"
 import Message from "../models/Message.js"
 import Match from "../models/Match.js"
+import { emitToMatch, emitToUsers } from "../socket.js"
 
 const isUserInMatch = (match, userId) => {
-  return match.users.some(user => user.toString() === userId.toString())
+  return match.users.some((user) => user.toString() === userId.toString())
+}
+
+const emitNotificationRefresh = (userIds = [], payload = {}) => {
+  emitToUsers(userIds, "notifications_refresh", payload)
 }
 
 export const sendMessage = async (req, res) => {
@@ -42,7 +47,7 @@ export const sendMessage = async (req, res) => {
     }
 
     const receiverId = match.users.find(
-      user => user.toString() !== senderId.toString()
+      (user) => user.toString() !== senderId.toString()
     )
 
     if (!receiverId) {
@@ -61,6 +66,17 @@ export const sendMessage = async (req, res) => {
 
     await Match.findByIdAndUpdate(matchId, {
       updatedAt: new Date()
+    })
+
+    emitToMatch(matchId, "receive_message", {
+      matchId: matchId.toString(),
+      message
+    })
+
+    emitNotificationRefresh([receiverId], {
+      type: "new_message",
+      matchId: matchId.toString(),
+      senderId: senderId.toString()
     })
 
     res.json({
@@ -179,6 +195,11 @@ export const deleteMessage = async (req, res) => {
 
     await Message.findByIdAndDelete(messageId)
 
+    emitNotificationRefresh(match.users, {
+      type: "message_deleted",
+      matchId: match._id.toString()
+    })
+
     res.json({
       message: "Message deleted"
     })
@@ -234,6 +255,12 @@ export const markMessagesAsRead = async (req, res) => {
         $set: { read: true }
       }
     )
+
+    emitNotificationRefresh(match.users, {
+      type: "messages_read",
+      matchId: match._id.toString(),
+      readerId: userId.toString()
+    })
 
     res.json({
       success: true,

@@ -2,6 +2,11 @@ import mongoose from "mongoose"
 import MessageRequest from "../models/MessageRequest.js"
 import Match from "../models/Match.js"
 import Block from "../models/Block.js"
+import { emitToUsers } from "../socket.js"
+
+const emitNotificationRefresh = (userIds = [], payload = {}) => {
+  emitToUsers(userIds, "notifications_refresh", payload)
+}
 
 export const sendMessageRequest = async (req, res) => {
   try {
@@ -72,6 +77,11 @@ export const sendMessageRequest = async (req, res) => {
       sender: senderId,
       receiver: receiverId,
       message: trimmedMessage
+    })
+
+    emitNotificationRefresh([receiverId], {
+      type: "message_request_received",
+      requestId: request._id.toString()
     })
 
     res.status(201).json(request)
@@ -167,13 +177,14 @@ export const acceptMessageRequest = async (req, res) => {
       })
     }
 
-    const existingMatch = await Match.findOne({
+    let match = await Match.findOne({
       users: { $all: [request.sender, request.receiver] }
     })
 
-    if (!existingMatch) {
-      await Match.create({
-        users: [request.sender, request.receiver]
+    if (!match) {
+      match = await Match.create({
+        users: [request.sender, request.receiver],
+        isNewFor: [request.sender, request.receiver]
       })
     }
 
@@ -193,6 +204,11 @@ export const acceptMessageRequest = async (req, res) => {
         status: "rejected"
       }
     )
+
+    emitNotificationRefresh([request.sender, request.receiver], {
+      type: "message_request_accepted",
+      matchId: match._id.toString()
+    })
 
     res.json(request)
   } catch (error) {
@@ -222,6 +238,11 @@ export const rejectMessageRequest = async (req, res) => {
     request.status = "rejected"
     await request.save()
 
+    emitNotificationRefresh([request.sender, request.receiver], {
+      type: "message_request_rejected",
+      requestId: request._id.toString()
+    })
+
     res.json(request)
   } catch (error) {
     console.error(error)
@@ -249,6 +270,11 @@ export const cancelMessageRequest = async (req, res) => {
 
     request.status = "rejected"
     await request.save()
+
+    emitNotificationRefresh([request.sender, request.receiver], {
+      type: "message_request_cancelled",
+      requestId: request._id.toString()
+    })
 
     res.json({
       message: "Message request cancelled",

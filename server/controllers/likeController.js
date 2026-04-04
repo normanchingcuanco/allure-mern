@@ -1,24 +1,28 @@
 import Like from "../models/Like.js"
 import Match from "../models/Match.js"
 import User from "../models/User.js"
+import { emitToUsers } from "../socket.js"
 
 const getMatchedUserIds = async (userId) => {
   const matches = await Match.find({
     users: userId
   }).select("users")
 
-  const matchedUserIds = matches.flatMap(match =>
+  const matchedUserIds = matches.flatMap((match) =>
     match.users
-      .map(id => id.toString())
-      .filter(id => id !== userId.toString())
+      .map((id) => id.toString())
+      .filter((id) => id !== userId.toString())
   )
 
   return matchedUserIds
 }
 
+const emitNotificationRefresh = (userIds = [], payload = {}) => {
+  emitToUsers(userIds, "notifications_refresh", payload)
+}
+
 export const sendLike = async (req, res) => {
   try {
-
     const { senderId, receiverId } = req.body
 
     if (senderId === receiverId) {
@@ -99,7 +103,7 @@ export const sendLike = async (req, res) => {
 
         await match.save()
       } else {
-        const currentIds = (match.isNewFor || []).map(id => id.toString())
+        const currentIds = (match.isNewFor || []).map((id) => id.toString())
 
         if (!currentIds.includes(senderId.toString())) {
           match.isNewFor.push(senderId)
@@ -111,6 +115,16 @@ export const sendLike = async (req, res) => {
 
         await match.save()
       }
+
+      emitNotificationRefresh([senderId, receiverId], {
+        type: "match_created",
+        matchId: match._id.toString()
+      })
+    } else {
+      emitNotificationRefresh([receiverId], {
+        type: "incoming_like_received",
+        senderId: senderId.toString()
+      })
     }
 
     return res.status(201).json({
@@ -118,37 +132,29 @@ export const sendLike = async (req, res) => {
       like,
       match
     })
-
   } catch (error) {
-
     console.error(error)
 
     res.status(500).json({
       message: "Server error"
     })
-
   }
 }
 
 export const getLikes = async (req, res) => {
   try {
-
     const likes = await Like.find()
 
     res.json(likes)
-
   } catch (error) {
-
     res.status(500).json({
       message: "Server error"
     })
-
   }
 }
 
 export const getReceivedLikes = async (req, res) => {
   try {
-
     const { userId } = req.params
     const matchedUserIds = await getMatchedUserIds(userId)
 
@@ -156,7 +162,7 @@ export const getReceivedLikes = async (req, res) => {
       receiverId: userId
     }).populate("senderId", "email gender isSuspended")
 
-    const filteredLikes = likes.filter(like => {
+    const filteredLikes = likes.filter((like) => {
       if (!like.senderId) return false
       if (like.senderId.isSuspended === true) return false
       if (matchedUserIds.includes(like.senderId._id.toString())) return false
@@ -164,19 +170,15 @@ export const getReceivedLikes = async (req, res) => {
     })
 
     res.json(filteredLikes)
-
   } catch (error) {
-
     res.status(500).json({
       message: "Server error"
     })
-
   }
 }
 
 export const getIncomingLikes = async (req, res) => {
   try {
-
     const { userId } = req.params
 
     const user = await User.findById(userId)
@@ -199,7 +201,7 @@ export const getIncomingLikes = async (req, res) => {
       receiverId: userId
     }).populate("senderId", "email isSuspended")
 
-    const filteredLikes = likes.filter(like => {
+    const filteredLikes = likes.filter((like) => {
       if (!like.senderId) return false
       if (like.senderId.isSuspended === true) return false
       if (matchedUserIds.includes(like.senderId._id.toString())) return false
@@ -207,21 +209,17 @@ export const getIncomingLikes = async (req, res) => {
     })
 
     res.json(filteredLikes)
-
   } catch (error) {
-
     console.error(error)
 
     res.status(500).json({
       message: "Failed to fetch incoming likes"
     })
-
   }
 }
 
 export const unlike = async (req, res) => {
   try {
-
     const { senderId, receiverId } = req.body
 
     await Like.findOneAndDelete({
@@ -229,16 +227,18 @@ export const unlike = async (req, res) => {
       receiverId
     })
 
+    emitNotificationRefresh([receiverId], {
+      type: "incoming_like_removed",
+      senderId: senderId?.toString?.() || senderId
+    })
+
     res.json({
       message: "Like removed"
     })
-
   } catch (error) {
-
     res.status(500).json({
       message: "Server error"
     })
-
   }
 }
 
@@ -266,7 +266,7 @@ export const getIncomingLikesCount = async (req, res) => {
       receiverId: userId
     }).populate("senderId", "_id isSuspended")
 
-    const count = likes.filter(like => {
+    const count = likes.filter((like) => {
       if (!like.senderId) return false
       if (like.senderId.isSuspended === true) return false
       if (matchedUserIds.includes(like.senderId._id.toString())) return false
@@ -274,7 +274,6 @@ export const getIncomingLikesCount = async (req, res) => {
     }).length
 
     res.json({ count })
-
   } catch (error) {
     res.status(500).json({
       message: "Failed to fetch incoming likes count",

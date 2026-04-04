@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import api from "../api/axios"
 import Navbar from "../components/Navbar"
+import socket from "../socket"
 
 export default function MessageRequests() {
   const [incomingRequests, setIncomingRequests] = useState([])
@@ -10,7 +11,7 @@ export default function MessageRequests() {
 
   const userId = localStorage.getItem("userId")
 
-  const fetchRequests = async (showLoader = true) => {
+  const fetchRequests = useCallback(async (showLoader = true) => {
     if (!userId) {
       setLoading(false)
       return
@@ -35,7 +36,7 @@ export default function MessageRequests() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [userId])
 
   useEffect(() => {
     if (!userId) {
@@ -44,13 +45,18 @@ export default function MessageRequests() {
     }
 
     fetchRequests()
+    socket.emit("register_user", userId)
 
-    const interval = setInterval(() => {
+    const handleRefresh = () => {
       fetchRequests(false)
-    }, 3000)
+    }
 
-    return () => clearInterval(interval)
-  }, [userId])
+    socket.on("notifications_refresh", handleRefresh)
+
+    return () => {
+      socket.off("notifications_refresh", handleRefresh)
+    }
+  }, [userId, fetchRequests])
 
   const acceptRequest = async (requestId) => {
     try {

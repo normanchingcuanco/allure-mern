@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import api from "../api/axios"
 import Navbar from "../components/Navbar"
+import socket from "../socket"
 
 export default function IncomingLikes() {
   const navigate = useNavigate()
@@ -9,20 +10,33 @@ export default function IncomingLikes() {
 
   const [likes, setLikes] = useState([])
 
-  useEffect(() => {
-    const fetchIncomingLikes = async () => {
-      try {
-        const res = await api.get(`/likes/incoming/${userId}`)
-        setLikes(res.data || [])
-      } catch (error) {
-        console.error(error)
-      }
-    }
+  const fetchIncomingLikes = useCallback(async () => {
+    if (!userId) return
 
-    if (userId) {
-      fetchIncomingLikes()
+    try {
+      const res = await api.get(`/likes/incoming/${userId}`)
+      setLikes(res.data || [])
+    } catch (error) {
+      console.error(error)
     }
   }, [userId])
+
+  useEffect(() => {
+    if (!userId) return
+
+    fetchIncomingLikes()
+    socket.emit("register_user", userId)
+
+    const handleRefresh = () => {
+      fetchIncomingLikes()
+    }
+
+    socket.on("notifications_refresh", handleRefresh)
+
+    return () => {
+      socket.off("notifications_refresh", handleRefresh)
+    }
+  }, [userId, fetchIncomingLikes])
 
   const likeBack = async (senderId) => {
     try {
