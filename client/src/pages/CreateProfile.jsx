@@ -1,4 +1,3 @@
-// client/src/pages/CreateProfile.jsx
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import api from "../api/axios"
@@ -44,7 +43,7 @@ export default function CreateProfile() {
         }
       })
 
-      setPhotos(prev => [...prev, res.data.imageUrl])
+      setPhotos((prev) => [...prev, res.data.imageUrl])
     } catch (err) {
       console.error(err)
       alert(err.response?.data?.message || "Image upload failed")
@@ -55,7 +54,27 @@ export default function CreateProfile() {
   }
 
   const removePhoto = (indexToRemove) => {
-    setPhotos(prev => prev.filter((_, index) => index !== indexToRemove))
+    setPhotos((prev) => prev.filter((_, index) => index !== indexToRemove))
+  }
+
+  const movePhoto = (fromIndex, toIndex) => {
+    setPhotos((prev) => {
+      const currentPhotos = [...prev]
+
+      if (
+        fromIndex < 0 ||
+        toIndex < 0 ||
+        fromIndex >= currentPhotos.length ||
+        toIndex >= currentPhotos.length
+      ) {
+        return prev
+      }
+
+      const [movedPhoto] = currentPhotos.splice(fromIndex, 1)
+      currentPhotos.splice(toIndex, 0, movedPhoto)
+
+      return currentPhotos
+    })
   }
 
   const handleSubmit = async (e) => {
@@ -81,7 +100,7 @@ export default function CreateProfile() {
         bio: bio.trim(),
         interests: interests
           .split(",")
-          .map(item => item.trim())
+          .map((item) => item.trim())
           .filter(Boolean),
         lifestyle: lifestyle.trim(),
         relationshipGoals: relationshipGoals.trim(),
@@ -169,29 +188,56 @@ export default function CreateProfile() {
 
         {uploading && <p>Uploading image...</p>}
 
-        {photos.length > 0 && photos.map((photo, index) => (
-          <div key={index} style={{ marginBottom: "12px" }}>
-            <img
-              src={photo}
-              alt={`profile-${index + 1}`}
-              width="150"
-              style={{
-                marginTop: "10px",
-                marginRight: "10px",
-                borderRadius: "8px",
-                display: "block"
-              }}
-            />
+        {photos.length > 0 &&
+          photos.map((photo, index) => (
+            <div key={index} style={{ marginBottom: "20px" }}>
+              <p>{index === 0 ? "Main Photo" : `Photo ${index + 1}`}</p>
 
-            <button
-              type="button"
-              onClick={() => removePhoto(index)}
-              style={{ marginTop: "6px" }}
-            >
-              Remove Photo
-            </button>
-          </div>
-        ))}
+              <img
+                src={photo}
+                alt={`profile-${index + 1}`}
+                width="150"
+                style={{
+                  marginTop: "10px",
+                  marginRight: "10px",
+                  borderRadius: "8px",
+                  display: "block"
+                }}
+              />
+
+              <div
+                style={{
+                  marginTop: "8px",
+                  display: "flex",
+                  gap: "8px",
+                  flexWrap: "wrap"
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => movePhoto(index, index - 1)}
+                  disabled={index === 0}
+                >
+                  Move Left
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => movePhoto(index, index + 1)}
+                  disabled={index === photos.length - 1}
+                >
+                  Move Right
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => removePhoto(index)}
+                >
+                  Remove Photo
+                </button>
+              </div>
+            </div>
+          ))}
 
         <br /><br />
 

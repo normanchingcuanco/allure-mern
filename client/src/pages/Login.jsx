@@ -4,20 +4,20 @@ import api from "../api/axios"
 import { useAuth } from "../context/AuthContext"
 
 export default function Login() {
-
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [resendEmail, setResendEmail] = useState("")
   const [resendMessage, setResendMessage] = useState("")
+  const [loading, setLoading] = useState(false)
 
   const navigate = useNavigate()
   const { login } = useAuth()
 
   const handleLogin = async (e) => {
-
     e.preventDefault()
 
     try {
+      setLoading(true)
 
       const res = await api.post("/auth/login", {
         email,
@@ -36,64 +36,63 @@ export default function Login() {
         res.data.id
 
       const token = res.data.token
+      const isAdmin = Boolean(res.data.isAdmin)
 
       if (!userId || !token) {
         throw new Error("Invalid login response structure")
       }
 
-      login(userId, token, res.data.isAdmin)
+      login(userId, token, isAdmin)
 
-      try {
-
-        const discoverRes = await api.get(`/profiles/discover/${userId}`)
-
-        if (discoverRes.data) {
-          navigate("/discover")
-        }
-
-      } catch (error) {
-
-        navigate("/create-profile")
-
+      if (isAdmin) {
+        navigate("/discover")
+        return
       }
 
+      try {
+        await api.get(`/profiles/user/${userId}`)
+        navigate("/discover")
+      } catch (error) {
+        if (error.response?.status === 404) {
+          navigate("/create-profile")
+          return
+        }
+
+        console.error("Profile check failed:", error)
+        alert(error.response?.data?.message || "Unable to complete login routing")
+      }
     } catch (err) {
-
       console.error(err)
-      alert("Login failed")
-
+      alert(err.response?.data?.message || "Login failed")
+    } finally {
+      setLoading(false)
     }
-
   }
 
   const handleResendVerification = async (e) => {
     e.preventDefault()
 
     try {
-
       const res = await api.post("/auth/resend-verification", {
         email: resendEmail
       })
 
-      setResendMessage(res.data.message || `Verification token: ${res.data.verificationToken}`)
-
+      setResendMessage(
+        res.data.message || `Verification token: ${res.data.verificationToken}`
+      )
     } catch (err) {
-
       console.error(err)
       setResendMessage(
         err.response?.data?.message || "Failed to resend verification"
       )
-
     }
   }
 
   return (
     <div>
-
       <h1>Login</h1>
 
       <form onSubmit={handleLogin}>
-
         <input
           type="email"
           placeholder="Email"
@@ -112,10 +111,9 @@ export default function Login() {
 
         <br /><br />
 
-        <button type="submit">
-          Login
+        <button type="submit" disabled={loading}>
+          {loading ? "Logging in..." : "Login"}
         </button>
-
       </form>
 
       <br />
@@ -129,7 +127,6 @@ export default function Login() {
       <h3>Didn’t receive verification email?</h3>
 
       <form onSubmit={handleResendVerification}>
-
         <input
           type="email"
           placeholder="Enter your email"
@@ -142,7 +139,6 @@ export default function Login() {
         <button type="submit">
           Resend Verification
         </button>
-
       </form>
 
       {resendMessage && (
@@ -151,7 +147,6 @@ export default function Login() {
           <p>{resendMessage}</p>
         </>
       )}
-
     </div>
   )
 }

@@ -1,5 +1,4 @@
-// client/src/pages/EditProfile.jsx
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import api from "../api/axios"
 import { useAuth } from "../context/AuthContext"
 import Navbar from "../components/Navbar"
@@ -13,21 +12,26 @@ export default function EditProfile() {
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const res = await api.get(`/profiles/user/${userId}`)
-        setProfile(res.data)
-      } catch (err) {
-        console.error(err)
-      }
+  const fetchProfile = useCallback(async () => {
+    try {
+      const res = await api.get(`/profiles/user/${userId}`)
+      setProfile(res.data)
+    } catch (err) {
+      console.error(err)
     }
-
-    fetchProfile()
   }, [userId])
 
+  useEffect(() => {
+    if (userId) {
+      fetchProfile()
+    }
+  }, [userId, fetchProfile])
+
   const handleChange = (e) => {
-    setProfile({ ...profile, [e.target.name]: e.target.value })
+    setProfile((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }))
   }
 
   const handlePhotoUpload = async (e) => {
@@ -53,7 +57,7 @@ export default function EditProfile() {
         }
       })
 
-      setProfile(prev => ({
+      setProfile((prev) => ({
         ...prev,
         photos: [...(prev.photos || []), res.data.imageUrl]
       }))
@@ -67,10 +71,33 @@ export default function EditProfile() {
   }
 
   const removePhoto = (indexToRemove) => {
-    setProfile(prev => ({
+    setProfile((prev) => ({
       ...prev,
       photos: (prev.photos || []).filter((_, index) => index !== indexToRemove)
     }))
+  }
+
+  const movePhoto = (fromIndex, toIndex) => {
+    setProfile((prev) => {
+      const currentPhotos = [...(prev.photos || [])]
+
+      if (
+        fromIndex < 0 ||
+        toIndex < 0 ||
+        fromIndex >= currentPhotos.length ||
+        toIndex >= currentPhotos.length
+      ) {
+        return prev
+      }
+
+      const [movedPhoto] = currentPhotos.splice(fromIndex, 1)
+      currentPhotos.splice(toIndex, 0, movedPhoto)
+
+      return {
+        ...prev,
+        photos: currentPhotos
+      }
+    })
   }
 
   const handleSubmit = async (e) => {
@@ -89,7 +116,7 @@ export default function EditProfile() {
     try {
       setSaving(true)
 
-      await api.put(`/profiles/${profile._id}`, {
+      const payload = {
         name: profile.name?.trim(),
         age: Number(profile.age),
         bio: profile.bio?.trim() || "",
@@ -97,12 +124,15 @@ export default function EditProfile() {
           ? profile.interests
           : String(profile.interests || "")
               .split(",")
-              .map(item => item.trim())
+              .map((item) => item.trim())
               .filter(Boolean),
         lifestyle: profile.lifestyle?.trim() || "",
         relationshipGoals: profile.relationshipGoals?.trim() || "",
         photos: profile.photos || []
-      })
+      }
+
+      await api.put(`/profiles/${profile._id}`, payload)
+      await fetchProfile()
 
       alert("Profile updated")
     } catch (err) {
@@ -159,10 +189,10 @@ export default function EditProfile() {
               : profile.interests || ""
           }
           onChange={(e) =>
-            setProfile({
-              ...profile,
+            setProfile((prev) => ({
+              ...prev,
               interests: e.target.value
-            })
+            }))
           }
           placeholder="Interests (comma separated)"
         />
@@ -202,32 +232,59 @@ export default function EditProfile() {
 
         {uploading && <p>Uploading image...</p>}
 
-        {profile.photos?.length > 0 && profile.photos.map((photo, index) => (
-          <div key={index} style={{ marginBottom: "12px" }}>
-            <img
-              src={photo}
-              alt={`profile-${index + 1}`}
-              width="150"
-              onError={(e) => {
-                e.target.style.display = "none"
-              }}
-              style={{
-                marginTop: "10px",
-                marginRight: "10px",
-                borderRadius: "8px",
-                display: "block"
-              }}
-            />
+        {profile.photos?.length > 0 &&
+          profile.photos.map((photo, index) => (
+            <div key={index} style={{ marginBottom: "20px" }}>
+              <p>{index === 0 ? "Main Photo" : `Photo ${index + 1}`}</p>
 
-            <button
-              type="button"
-              onClick={() => removePhoto(index)}
-              style={{ marginTop: "6px" }}
-            >
-              Remove Photo
-            </button>
-          </div>
-        ))}
+              <img
+                src={photo}
+                alt={`profile-${index + 1}`}
+                width="150"
+                onError={(e) => {
+                  e.target.style.display = "none"
+                }}
+                style={{
+                  marginTop: "10px",
+                  marginRight: "10px",
+                  borderRadius: "8px",
+                  display: "block"
+                }}
+              />
+
+              <div
+                style={{
+                  marginTop: "8px",
+                  display: "flex",
+                  gap: "8px",
+                  flexWrap: "wrap"
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => movePhoto(index, index - 1)}
+                  disabled={index === 0}
+                >
+                  Move Left
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => movePhoto(index, index + 1)}
+                  disabled={index === (profile.photos?.length || 0) - 1}
+                >
+                  Move Right
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => removePhoto(index)}
+                >
+                  Remove Photo
+                </button>
+              </div>
+            </div>
+          ))}
 
         <br /><br />
 

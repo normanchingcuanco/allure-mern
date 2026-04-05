@@ -12,6 +12,7 @@ export default function Matches() {
   const [matches, setMatches] = useState([])
   const [loading, setLoading] = useState(true)
   const [unmatchingId, setUnmatchingId] = useState("")
+  const [blockingId, setBlockingId] = useState("")
 
   const fetchMatches = useCallback(async () => {
     if (!userId) {
@@ -86,6 +87,37 @@ export default function Matches() {
       alert(error.response?.data?.message || "Failed to unmatch")
     } finally {
       setUnmatchingId("")
+    }
+  }
+
+  const handleBlock = async (match) => {
+    const blockedId = match?.otherUser?._id
+
+    if (!blockedId) {
+      alert("Unable to find this user")
+      return
+    }
+
+    const confirmed = window.confirm(
+      "Are you sure you want to block this user? This will remove the match and chat history."
+    )
+    if (!confirmed) return
+
+    try {
+      setBlockingId(match._id)
+
+      await api.post("/blocks", {
+        blockerId: userId,
+        blockedId
+      })
+
+      setMatches((prev) => prev.filter((item) => item._id !== match._id))
+      alert("User blocked successfully")
+    } catch (error) {
+      console.error(error)
+      alert(error.response?.data?.message || "Failed to block user")
+    } finally {
+      setBlockingId("")
     }
   }
 
@@ -179,9 +211,16 @@ export default function Matches() {
 
                   <button
                     onClick={() => handleUnmatch(match._id)}
-                    disabled={unmatchingId === match._id}
+                    disabled={unmatchingId === match._id || blockingId === match._id}
                   >
                     {unmatchingId === match._id ? "Unmatching..." : "Unmatch"}
+                  </button>
+
+                  <button
+                    onClick={() => handleBlock(match)}
+                    disabled={blockingId === match._id || unmatchingId === match._id}
+                  >
+                    {blockingId === match._id ? "Blocking..." : "Block"}
                   </button>
                 </div>
               </div>

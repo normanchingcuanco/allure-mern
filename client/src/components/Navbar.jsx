@@ -12,12 +12,9 @@ export default function Navbar() {
   const userId = auth?.userId || localStorage.getItem("userId")
   const isAdmin = (auth?.isAdmin || localStorage.getItem("isAdmin")) === "true"
 
-  console.log("Navbar render active:", userId)
-
   const [incomingLikesCount, setIncomingLikesCount] = useState(0)
   const [newMatchesCount, setNewMatchesCount] = useState(0)
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0)
-  const [hasProfile, setHasProfile] = useState(true)
 
   const fetchCounts = useCallback(async () => {
     if (!userId) {
@@ -42,45 +39,43 @@ export default function Navbar() {
     }
   }, [userId])
 
-  const checkProfileStatus = useCallback(async () => {
-    if (!userId) {
-      setHasProfile(false)
-      return
-    }
-
-    try {
-      await api.get(`/profiles/user/${userId}`)
-      setHasProfile(true)
-    } catch (error) {
-      if (error.response?.status === 404) {
-        setHasProfile(false)
-      } else {
-        console.error("Navbar profile check error:", error)
-      }
-    }
-  }, [userId])
-
   useEffect(() => {
     if (!userId) return
 
-    fetchCounts()
-    checkProfileStatus()
+    const registerCurrentUser = () => {
+      socket.emit("register_user", userId)
+    }
 
-    console.log("Navbar registering user:", userId)
-    socket.emit("register_user", userId)
+    if (!socket.connected) {
+      socket.connect()
+    }
+
+    registerCurrentUser()
+    fetchCounts()
+
+    const handleConnect = () => {
+      registerCurrentUser()
+      fetchCounts()
+    }
 
     const handleRefresh = () => {
-      console.log("Navbar notifications_refresh received")
       fetchCounts()
-      checkProfileStatus()
     }
 
+    const handleNewMessage = () => {
+      fetchCounts()
+    }
+
+    socket.on("connect", handleConnect)
     socket.on("notifications_refresh", handleRefresh)
+    socket.on("new_message", handleNewMessage)
 
     return () => {
+      socket.off("connect", handleConnect)
       socket.off("notifications_refresh", handleRefresh)
+      socket.off("new_message", handleNewMessage)
     }
-  }, [userId, fetchCounts, checkProfileStatus])
+  }, [userId, fetchCounts])
 
   const handleLogout = () => {
     auth?.logout?.()
@@ -154,27 +149,17 @@ export default function Navbar() {
         Favorites
       </Link>
 
-      {!hasProfile && (
-        <Link to="/create-profile" style={linkStyle("/create-profile")}>
-          Create Profile
-        </Link>
-      )}
+      <Link to={`/profile/${userId}`} style={linkStyle(`/profile/${userId}`)}>
+        My Profile
+      </Link>
 
-      {hasProfile && (
-        <>
-          <Link to={`/profile/${userId}`} style={linkStyle(`/profile/${userId}`)}>
-            My Profile
-          </Link>
+      <Link to="/edit-profile" style={linkStyle("/edit-profile")}>
+        Edit Profile
+      </Link>
 
-          <Link to="/edit-profile" style={linkStyle("/edit-profile")}>
-            Edit Profile
-          </Link>
-
-          <Link to="/blocked-users" style={linkStyle("/blocked-users")}>
-            Blocked Users
-          </Link>
-        </>
-      )}
+      <Link to="/blocked-users" style={linkStyle("/blocked-users")}>
+        Blocked Users
+      </Link>
 
       {isAdmin && (
         <>

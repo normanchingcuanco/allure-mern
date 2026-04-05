@@ -1,4 +1,3 @@
-// server/controllers/profileController.js
 import Like from "../models/Like.js"
 import Profile from "../models/Profile.js"
 import User from "../models/User.js"
@@ -34,19 +33,18 @@ const normalizePhotos = (photos) => {
 }
 
 const buildProfilePayload = (body) => {
-  const payload = {
+  return {
     name: String(body.name || "").trim(),
-    age: body.age === "" || body.age === undefined || body.age === null
-      ? undefined
-      : Number(body.age),
+    age:
+      body.age === "" || body.age === undefined || body.age === null
+        ? undefined
+        : Number(body.age),
     bio: String(body.bio || "").trim(),
     interests: parseList(body.interests),
     lifestyle: String(body.lifestyle || "").trim(),
     relationshipGoals: String(body.relationshipGoals || "").trim(),
     photos: normalizePhotos(body.photos)
   }
-
-  return payload
 }
 
 const validateProfilePayload = (payload, isCreate = true) => {

@@ -1,5 +1,7 @@
 import { Routes, Route } from "react-router-dom"
 
+import ProtectedRoute from "./components/ProtectedRoute"
+
 import Login from "./pages/Login"
 import Register from "./pages/Register"
 import VerifyEmail from "./pages/VerifyEmail"
@@ -22,32 +24,169 @@ import AccountSettings from "./pages/AccountSettings"
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Login />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute guestOnly>
+            <Login />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/login"
+        element={
+          <ProtectedRoute guestOnly>
+            <Login />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/register"
+        element={
+          <ProtectedRoute guestOnly>
+            <Register />
+          </ProtectedRoute>
+        }
+      />
+
       <Route path="/verify-email/:token" element={<VerifyEmail />} />
 
-      <Route path="/discover" element={<Discover />} />
+      <Route
+        path="/discover"
+        element={
+          <ProtectedRoute requireAuth requireProfile>
+            <Discover />
+          </ProtectedRoute>
+        }
+      />
 
-      <Route path="/create-profile" element={<CreateProfile />} />
-      <Route path="/edit-profile" element={<EditProfile />} />
-      <Route path="/profile/:userId" element={<Profile />} />
+      <Route
+        path="/create-profile"
+        element={
+          <ProtectedRoute requireAuth>
+            <CreateProfile />
+          </ProtectedRoute>
+        }
+      />
 
-      <Route path="/favorites" element={<Favorites />} />
-      <Route path="/likes" element={<Likes />} />
-      <Route path="/incoming-likes" element={<IncomingLikes />} />
+      <Route
+        path="/edit-profile"
+        element={
+          <ProtectedRoute requireAuth requireProfile>
+            <EditProfile />
+          </ProtectedRoute>
+        }
+      />
 
-      <Route path="/matches" element={<Matches />} />
-      <Route path="/chat/:matchId" element={<Chat />} />
+      <Route
+        path="/profile/:userId"
+        element={
+          <ProtectedRoute requireAuth requireProfile>
+            <Profile />
+          </ProtectedRoute>
+        }
+      />
 
-      <Route path="/message-requests" element={<MessageRequests />} />
-      <Route path="/blocked-users" element={<BlockedUsers />} />
+      <Route
+        path="/favorites"
+        element={
+          <ProtectedRoute requireAuth requireProfile>
+            <Favorites />
+          </ProtectedRoute>
+        }
+      />
 
-      <Route path="/verification-request" element={<VerificationRequest />} />
-      <Route path="/admin/verification" element={<AdminVerification />} />
-      <Route path="/admin/reports" element={<AdminReports />} />
+      <Route
+        path="/likes"
+        element={
+          <ProtectedRoute requireAuth requireProfile>
+            <Likes />
+          </ProtectedRoute>
+        }
+      />
 
-      <Route path="/settings" element={<AccountSettings />} />
+      <Route
+        path="/incoming-likes"
+        element={
+          <ProtectedRoute requireAuth requireProfile>
+            <IncomingLikes />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/matches"
+        element={
+          <ProtectedRoute requireAuth requireProfile>
+            <Matches />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/chat/:matchId"
+        element={
+          <ProtectedRoute requireAuth requireProfile>
+            <Chat />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/message-requests"
+        element={
+          <ProtectedRoute requireAuth requireProfile>
+            <MessageRequests />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/blocked-users"
+        element={
+          <ProtectedRoute requireAuth requireProfile>
+            <BlockedUsers />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/verification-request"
+        element={
+          <ProtectedRoute requireAuth requireProfile>
+            <VerificationRequest />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/verification"
+        element={
+          <ProtectedRoute requireAuth>
+            <AdminVerification />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/reports"
+        element={
+          <ProtectedRoute requireAuth>
+            <AdminReports />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute requireAuth>
+            <AccountSettings />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   )
 }

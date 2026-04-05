@@ -1,9 +1,12 @@
 import mongoose from "mongoose"
 import Block from "../models/Block.js"
+import Favorite from "../models/Favorite.js"
 import Like from "../models/Like.js"
 import Match from "../models/Match.js"
 import Message from "../models/Message.js"
 import MessageRequest from "../models/MessageRequest.js"
+import Profile from "../models/Profile.js"
+import User from "../models/User.js"
 import { emitToUsers } from "../socket.js"
 
 const isValidObjectId = (value) => mongoose.Types.ObjectId.isValid(value)
@@ -30,6 +33,17 @@ export const blockUser = async (req, res) => {
       })
     }
 
+    const [blockerUser, blockedUser] = await Promise.all([
+      User.findById(blockerId),
+      User.findById(blockedId)
+    ])
+
+    if (!blockerUser || !blockedUser) {
+      return res.status(404).json({
+        message: "User not found"
+      })
+    }
+
     const existingBlock = await Block.findOne({
       blockerId,
       blockedId
@@ -49,6 +63,11 @@ export const blockUser = async (req, res) => {
     await block.save()
 
     const participantIds = [blockerId.toString(), blockedId.toString()]
+
+    const [blockerProfile, blockedProfile] = await Promise.all([
+      Profile.findOne({ userId: blockerId }).select("_id"),
+      Profile.findOne({ userId: blockedId }).select("_id")
+    ])
 
     const existingMatch = await Match.findOne({
       users: { $all: participantIds }
@@ -95,6 +114,28 @@ export const blockUser = async (req, res) => {
         }
       ]
     })
+
+    const favoriteDeleteConditions = []
+
+    if (blockedProfile?._id) {
+      favoriteDeleteConditions.push({
+        userId: blockerId,
+        profileId: blockedProfile._id
+      })
+    }
+
+    if (blockerProfile?._id) {
+      favoriteDeleteConditions.push({
+        userId: blockedId,
+        profileId: blockerProfile._id
+      })
+    }
+
+    if (favoriteDeleteConditions.length > 0) {
+      await Favorite.deleteMany({
+        $or: favoriteDeleteConditions
+      })
+    }
 
     emitToUsers(participantIds, "notifications_refresh", {
       type: "user_blocked",
