@@ -3,11 +3,13 @@ import { Link, useNavigate } from "react-router-dom"
 import api from "../api/axios"
 
 export default function Register() {
-
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [gender, setGender] = useState("")
   const [loading, setLoading] = useState(false)
+  const [verificationToken, setVerificationToken] = useState("")
+  const [registeredEmail, setRegisteredEmail] = useState("")
+  const [successMessage, setSuccessMessage] = useState("")
 
   const navigate = useNavigate()
 
@@ -21,6 +23,9 @@ export default function Register() {
 
     try {
       setLoading(true)
+      setVerificationToken("")
+      setRegisteredEmail("")
+      setSuccessMessage("")
 
       const res = await api.post("/auth/register", {
         email,
@@ -28,15 +33,24 @@ export default function Register() {
         gender
       })
 
-      const verificationToken = res.data?.verificationToken
+      const token = res.data?.verificationToken || ""
 
-      if (verificationToken) {
-        alert(`Registered successfully. Verification token: ${verificationToken}`)
-      } else {
-        alert("Registered successfully")
+      setVerificationToken(token)
+      setRegisteredEmail(email)
+      setSuccessMessage("Registration successful. Verify your email before logging in.")
+
+      if (token) {
+        navigate(`/verify-email/${token}`, {
+          state: {
+            email,
+            verificationToken: token
+          }
+        })
+        return
       }
 
-      navigate("/")
+      alert("Registered successfully, but no verification token was returned.")
+      navigate("/login")
     } catch (err) {
       console.error(err)
       alert(err.response?.data?.message || "Registration failed")
@@ -50,7 +64,6 @@ export default function Register() {
       <h1>Register</h1>
 
       <form onSubmit={handleRegister}>
-
         <input
           type="email"
           placeholder="Email"
@@ -83,13 +96,37 @@ export default function Register() {
         <button type="submit" disabled={loading}>
           {loading ? "Registering..." : "Register"}
         </button>
-
       </form>
+
+      {successMessage && (
+        <>
+          <br />
+          <p>{successMessage}</p>
+        </>
+      )}
+
+      {registeredEmail && (
+        <>
+          <p>Email: {registeredEmail}</p>
+        </>
+      )}
+
+      {verificationToken && (
+        <>
+          <p>Verification token: {verificationToken}</p>
+          <p>
+            Verify now:{" "}
+            <Link to={`/verify-email/${verificationToken}`}>
+              Open verification page
+            </Link>
+          </p>
+        </>
+      )}
 
       <br />
 
       <p>
-        Already have an account? <Link to="/">Login</Link>
+        Already have an account? <Link to="/login">Login</Link>
       </p>
     </div>
   )

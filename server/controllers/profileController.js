@@ -1,27 +1,79 @@
+// server/controllers/profileController.js
 import Like from "../models/Like.js"
 import Profile from "../models/Profile.js"
 import User from "../models/User.js"
 import Block from "../models/Block.js"
 
+const MAX_PHOTOS = 6
+
 const parseList = (value) => {
   if (!value) return []
-  return value
+
+  if (Array.isArray(value)) {
+    return value
+      .map(item => String(item).trim())
+      .filter(Boolean)
+  }
+
+  return String(value)
     .split(",")
     .map(item => item.trim())
     .filter(Boolean)
 }
 
-export const createProfile = async (req, res) => {
-  try {
-    const { userId, name, age, bio, interests, lifestyle, relationshipGoals, photos } = req.body
+const normalizePhotos = (photos) => {
+  if (!photos) return []
 
-    const existingProfile = await Profile.findOne({ userId })
+  const cleaned = Array.isArray(photos)
+    ? photos
+        .map(photo => String(photo).trim())
+        .filter(Boolean)
+    : [String(photos).trim()].filter(Boolean)
 
-    if (existingProfile) {
-      return res.status(400).json({ message: "Profile already exists" })
+  return [...new Set(cleaned)].slice(0, MAX_PHOTOS)
+}
+
+const buildProfilePayload = (body) => {
+  const payload = {
+    name: String(body.name || "").trim(),
+    age: body.age === "" || body.age === undefined || body.age === null
+      ? undefined
+      : Number(body.age),
+    bio: String(body.bio || "").trim(),
+    interests: parseList(body.interests),
+    lifestyle: String(body.lifestyle || "").trim(),
+    relationshipGoals: String(body.relationshipGoals || "").trim(),
+    photos: normalizePhotos(body.photos)
+  }
+
+  return payload
+}
+
+const validateProfilePayload = (payload, isCreate = true) => {
+  if (isCreate && !payload.name) {
+    return "Name is required"
+  }
+
+  if (payload.age !== undefined) {
+    if (Number.isNaN(payload.age)) {
+      return "Age must be a valid number"
     }
 
-    const profile = new Profile({
+    if (payload.age < 18) {
+      return "User must be at least 18 years old"
+    }
+  }
+
+  if (payload.photos.length > MAX_PHOTOS) {
+    return `You can upload up to ${MAX_PHOTOS} photos only`
+  }
+
+  return null
+}
+
+export const createProfile = async (req, res) => {
+  try {
+    const {
       userId,
       name,
       age,
@@ -30,6 +82,33 @@ export const createProfile = async (req, res) => {
       lifestyle,
       relationshipGoals,
       photos
+    } = req.body
+
+    const existingProfile = await Profile.findOne({ userId })
+
+    if (existingProfile) {
+      return res.status(400).json({ message: "Profile already exists" })
+    }
+
+    const payload = buildProfilePayload({
+      name,
+      age,
+      bio,
+      interests,
+      lifestyle,
+      relationshipGoals,
+      photos
+    })
+
+    const validationError = validateProfilePayload(payload, true)
+
+    if (validationError) {
+      return res.status(400).json({ message: validationError })
+    }
+
+    const profile = new Profile({
+      userId,
+      ...payload
     })
 
     await profile.save()
@@ -91,13 +170,30 @@ export const getProfileById = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const updatedProfile = await Profile.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    )
+    const existingProfile = await Profile.findById(req.params.id)
 
-    res.json(updatedProfile)
+    if (!existingProfile) {
+      return res.status(404).json({ message: "Profile not found" })
+    }
+
+    const payload = buildProfilePayload(req.body)
+    const validationError = validateProfilePayload(payload, false)
+
+    if (validationError) {
+      return res.status(400).json({ message: validationError })
+    }
+
+    existingProfile.name = payload.name || existingProfile.name
+    existingProfile.age = payload.age ?? existingProfile.age
+    existingProfile.bio = payload.bio
+    existingProfile.interests = payload.interests
+    existingProfile.lifestyle = payload.lifestyle
+    existingProfile.relationshipGoals = payload.relationshipGoals
+    existingProfile.photos = payload.photos
+
+    await existingProfile.save()
+
+    res.json(existingProfile)
   } catch (error) {
     res.status(500).json({
       message: "Server error",

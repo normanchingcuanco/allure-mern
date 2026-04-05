@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import api from "../api/axios"
 import { useAuth } from "../context/AuthContext"
 
@@ -117,6 +117,12 @@ export default function Login() {
         </button>
 
       </form>
+
+      <br />
+
+      <p>
+        Don&apos;t have an account? <Link to="/register">Register</Link>
+      </p>
 
       <br /><br />
 

@@ -1,3 +1,4 @@
+// server/routes/profileRoutes.js
 import express from "express"
 import {
   createProfile,
@@ -23,9 +24,18 @@ router.get("/discover/:userId", discoverProfiles)
    PROFILE UPLOAD
 ================================ */
 
-router.post("/upload", upload.single("image"), (req, res) => {
-  try {
+router.post("/upload", (req, res, next) => {
+  upload.single("image")(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({
+        message: err.message || "Upload failed"
+      })
+    }
 
+    next()
+  })
+}, (req, res) => {
+  try {
     if (!req.file) {
       return res.status(400).json({ message: "No image uploaded" })
     }
@@ -33,14 +43,11 @@ router.post("/upload", upload.single("image"), (req, res) => {
     res.json({
       imageUrl: req.file.path
     })
-
   } catch (error) {
-
     res.status(500).json({
       message: "Upload failed",
       error
     })
-
   }
 })
 

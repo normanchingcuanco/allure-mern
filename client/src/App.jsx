@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom"
 
 import Login from "./pages/Login"
 import Register from "./pages/Register"
+import VerifyEmail from "./pages/VerifyEmail"
 import Discover from "./pages/Discover"
 import CreateProfile from "./pages/CreateProfile"
 import EditProfile from "./pages/EditProfile"
@@ -24,6 +25,7 @@ function App() {
       <Route path="/" element={<Login />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/verify-email/:token" element={<VerifyEmail />} />
 
       <Route path="/discover" element={<Discover />} />
 

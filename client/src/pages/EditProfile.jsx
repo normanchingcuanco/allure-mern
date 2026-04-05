@@ -1,13 +1,17 @@
+// client/src/pages/EditProfile.jsx
 import { useEffect, useState } from "react"
 import api from "../api/axios"
 import { useAuth } from "../context/AuthContext"
 import Navbar from "../components/Navbar"
+
+const MAX_PHOTOS = 6
 
 export default function EditProfile() {
   const { userId } = useAuth()
 
   const [profile, setProfile] = useState(null)
   const [uploading, setUploading] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -31,6 +35,12 @@ export default function EditProfile() {
 
     if (!file) return
 
+    if ((profile.photos?.length || 0) >= MAX_PHOTOS) {
+      alert(`You can upload up to ${MAX_PHOTOS} photos only`)
+      e.target.value = ""
+      return
+    }
+
     const formData = new FormData()
     formData.append("image", file)
 
@@ -43,43 +53,63 @@ export default function EditProfile() {
         }
       })
 
-      setProfile((prev) => ({
+      setProfile(prev => ({
         ...prev,
         photos: [...(prev.photos || []), res.data.imageUrl]
       }))
     } catch (err) {
       console.error(err)
-      alert("Image upload failed")
+      alert(err.response?.data?.message || "Image upload failed")
     } finally {
       setUploading(false)
+      e.target.value = ""
     }
   }
 
   const removePhoto = (indexToRemove) => {
-    setProfile((prev) => ({
+    setProfile(prev => ({
       ...prev,
-      photos: prev.photos.filter((_, index) => index !== indexToRemove)
+      photos: (prev.photos || []).filter((_, index) => index !== indexToRemove)
     }))
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
 
+    if (!profile.name?.trim()) {
+      alert("Name is required")
+      return
+    }
+
+    if (!profile.age || Number(profile.age) < 18) {
+      alert("Age must be 18 or above")
+      return
+    }
+
     try {
+      setSaving(true)
+
       await api.put(`/profiles/${profile._id}`, {
-        ...profile,
+        name: profile.name?.trim(),
+        age: Number(profile.age),
+        bio: profile.bio?.trim() || "",
         interests: Array.isArray(profile.interests)
           ? profile.interests
           : String(profile.interests || "")
               .split(",")
-              .map((item) => item.trim())
-              .filter(Boolean)
+              .map(item => item.trim())
+              .filter(Boolean),
+        lifestyle: profile.lifestyle?.trim() || "",
+        relationshipGoals: profile.relationshipGoals?.trim() || "",
+        photos: profile.photos || []
       })
 
       alert("Profile updated")
     } catch (err) {
       console.error(err)
-      alert("Profile update failed")
+      alert(err.response?.data?.message || "Profile update failed")
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -102,6 +132,8 @@ export default function EditProfile() {
         <br /><br />
 
         <input
+          type="number"
+          min="18"
           name="age"
           value={profile.age || ""}
           onChange={handleChange}
@@ -157,21 +189,28 @@ export default function EditProfile() {
 
         <input
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp,image/jpg"
           onChange={handlePhotoUpload}
+          disabled={uploading || (profile.photos?.length || 0) >= MAX_PHOTOS}
         />
 
         <br /><br />
 
+        <p>
+          Photos: {profile.photos?.length || 0}/{MAX_PHOTOS}
+        </p>
+
         {uploading && <p>Uploading image...</p>}
 
         {profile.photos?.length > 0 && profile.photos.map((photo, index) => (
-          <div key={index}>
+          <div key={index} style={{ marginBottom: "12px" }}>
             <img
               src={photo}
-              alt="profile"
+              alt={`profile-${index + 1}`}
               width="150"
-              onError={(e) => (e.target.style.display = "none")}
+              onError={(e) => {
+                e.target.style.display = "none"
+              }}
               style={{
                 marginTop: "10px",
                 marginRight: "10px",
@@ -183,7 +222,7 @@ export default function EditProfile() {
             <button
               type="button"
               onClick={() => removePhoto(index)}
-              style={{ marginTop: "6px", marginBottom: "10px" }}
+              style={{ marginTop: "6px" }}
             >
               Remove Photo
             </button>
@@ -192,8 +231,8 @@ export default function EditProfile() {
 
         <br /><br />
 
-        <button type="submit" disabled={uploading}>
-          Save Changes
+        <button type="submit" disabled={uploading || saving}>
+          {saving ? "Saving..." : "Save Changes"}
         </button>
       </form>
     </>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { useNavigate, useParams } from "react-router-dom"
+import { Link, useNavigate, useParams } from "react-router-dom"
 import api from "../api/axios"
 
 export default function VerifyEmail() {
@@ -8,7 +8,7 @@ export default function VerifyEmail() {
 
   const [loading, setLoading] = useState(true)
   const [success, setSuccess] = useState(false)
-  const [error, setError] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
 
   useEffect(() => {
     let redirectTimer
@@ -19,11 +19,13 @@ export default function VerifyEmail() {
         setSuccess(true)
 
         redirectTimer = setTimeout(() => {
-          navigate("/")
+          navigate("/login")
         }, 3000)
       } catch (err) {
         console.error("Email verification failed:", err)
-        setError(true)
+        setErrorMessage(
+          err.response?.data?.message || "Verification failed or token expired."
+        )
       } finally {
         setLoading(false)
       }
@@ -32,7 +34,7 @@ export default function VerifyEmail() {
     if (token) {
       verifyUserEmail()
     } else {
-      setError(true)
+      setErrorMessage("Missing verification token.")
       setLoading(false)
     }
 
@@ -47,21 +49,31 @@ export default function VerifyEmail() {
 
       {loading && <p>Verifying your email...</p>}
 
-      {success && (
+      {!loading && success && (
         <>
           <p style={styles.success}>
             Email verified successfully. Redirecting to login...
           </p>
-          <button onClick={() => navigate("/")}>Go to Login Now</button>
+
+          <button onClick={() => navigate("/login")}>
+            Go to Login Now
+          </button>
         </>
       )}
 
-      {error && (
+      {!loading && !success && errorMessage && (
         <>
-          <p style={styles.error}>
-            Verification failed or token expired.
-          </p>
-          <button onClick={() => navigate("/")}>Back to Login</button>
+          <p style={styles.error}>{errorMessage}</p>
+
+          <div style={styles.actions}>
+            <button onClick={() => navigate("/login")}>
+              Back to Login
+            </button>
+
+            <Link to="/register">
+              Register Again
+            </Link>
+          </div>
         </>
       )}
     </div>
@@ -76,9 +88,17 @@ const styles = {
     textAlign: "center"
   },
   success: {
-    color: "green"
+    color: "green",
+    marginBottom: "16px"
   },
   error: {
-    color: "red"
+    color: "red",
+    marginBottom: "16px"
+  },
+  actions: {
+    display: "flex",
+    gap: "12px",
+    justifyContent: "center",
+    alignItems: "center"
   }
 }
