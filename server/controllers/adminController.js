@@ -1,6 +1,8 @@
 import User from "../models/User.js"
 import Profile from "../models/Profile.js"
 import Report from "../models/Report.js"
+import Match from "../models/Match.js"
+import { emitToUsers } from "../socket.js"
 
 /* Get all reports */
 export const getReports = async (req, res) => {
@@ -40,6 +42,20 @@ export const suspendUser = async (req, res) => {
     user.isSuspended = true
     await user.save()
 
+    const matches = await Match.find({ users: userId }).select("users")
+
+    const affectedUserIds = [
+      userId.toString(),
+      ...matches.flatMap((match) =>
+        match.users.map((id) => id.toString())
+      )
+    ]
+
+    emitToUsers(affectedUserIds, "notifications_refresh", {
+      type: "user_suspended",
+      userId: userId.toString()
+    })
+
     res.json({
       message: "User suspended",
       user
@@ -70,6 +86,20 @@ export const unsuspendUser = async (req, res) => {
 
     user.isSuspended = false
     await user.save()
+
+    const matches = await Match.find({ users: userId }).select("users")
+
+    const affectedUserIds = [
+      userId.toString(),
+      ...matches.flatMap((match) =>
+        match.users.map((id) => id.toString())
+      )
+    ]
+
+    emitToUsers(affectedUserIds, "notifications_refresh", {
+      type: "user_unsuspended",
+      userId: userId.toString()
+    })
 
     res.json({
       message: "User unsuspended",

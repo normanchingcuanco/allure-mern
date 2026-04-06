@@ -29,6 +29,14 @@ export default function Chat() {
 
   const bottomRef = useRef(null)
 
+  const exitChat = useCallback(() => {
+    setMessages([])
+    setTypingUser(false)
+    setText("")
+    setError("")
+    navigate("/matches", { replace: true })
+  }, [navigate])
+
   const markCurrentMatchAsRead = useCallback(async () => {
     if (!matchId || !userId) return
 
@@ -43,7 +51,7 @@ export default function Chat() {
   }, [matchId, userId])
 
   const fetchMessages = useCallback(async () => {
-    if (!userId || !matchId) return
+    if (!userId || !matchId) return false
 
     try {
       setError("")
@@ -53,27 +61,22 @@ export default function Chat() {
       })
 
       setMessages(Array.isArray(res.data) ? res.data : [])
+      return true
     } catch (err) {
       console.error("Fetch messages error:", err)
 
-      if (err.response?.status === 403) {
-        setError("You are not authorized to view this chat.")
-        setMessages([])
-        return
-      }
-
-      if (err.response?.status === 404) {
-        setError("Chat not found.")
-        setMessages([])
-        return
+      if (err.response?.status === 403 || err.response?.status === 404) {
+        exitChat()
+        return false
       }
 
       setError("Failed to load messages.")
+      return false
     }
-  }, [matchId, userId])
+  }, [matchId, userId, exitChat])
 
   const fetchMatch = useCallback(async () => {
-    if (!userId || !matchId) return
+    if (!userId || !matchId) return false
 
     try {
       const res = await api.get(`/matches/${userId}`)
@@ -82,32 +85,62 @@ export default function Chat() {
         ? res.data.find((m) => m._id === matchId)
         : null
 
-      if (!match) return
-
-      setReceiverName(match?.otherUser?.email || "User")
+      if (!match) {
+        exitChat()
+        return false
+      }
 
       if (match?.otherUser?._id) {
         try {
           const profileRes = await api.get(`/profiles/user/${match.otherUser._id}`)
           const profile = profileRes.data
 
+          setReceiverName(profile?.name || "User")
           setReceiverPhoto(profile?.photos?.[0] || "")
-          setReceiverName(profile?.name || match?.otherUser?.email || "User")
         } catch (profileError) {
           console.error("Fetch receiver profile error:", profileError)
+          setReceiverPhoto("")
+          setReceiverName(match?.otherUser?.email || "User")
         }
+      } else {
+        setReceiverPhoto("")
+        setReceiverName(match?.otherUser?.email || "User")
       }
+
+      return true
     } catch (err) {
       console.error("Fetch match error:", err)
+
+      if (err.response?.status === 403 || err.response?.status === 404) {
+        exitChat()
+        return false
+      }
+
+      setError("Failed to load chat.")
+      return false
     }
-  }, [userId, matchId])
+  }, [userId, matchId, exitChat])
+
+  const refreshChatState = useCallback(async () => {
+    const matchExists = await fetchMatch()
+
+    if (!matchExists) {
+      return
+    }
+
+    const messagesLoaded = await fetchMessages()
+
+    if (!messagesLoaded) {
+      return
+    }
+
+    await markCurrentMatchAsRead()
+  }, [fetchMatch, fetchMessages, markCurrentMatchAsRead])
 
   useEffect(() => {
     if (!userId || !matchId) return
 
-    fetchMessages()
-    fetchMatch()
-    markCurrentMatchAsRead()
+    refreshChatState()
 
     socket.emit("register_user", userId)
     socket.emit("join_match", matchId)
@@ -115,7 +148,7 @@ export default function Chat() {
     return () => {
       socket.emit("leave_match", matchId)
     }
-  }, [matchId, userId, fetchMessages, fetchMatch, markCurrentMatchAsRead])
+  }, [matchId, userId, refreshChatState])
 
   useEffect(() => {
     if (!matchId || !userId) return
@@ -144,16 +177,22 @@ export default function Chat() {
       setTypingUser(false)
     }
 
+    const handleRefresh = async () => {
+      await refreshChatState()
+    }
+
     socket.on("receive_message", handleReceiveMessage)
     socket.on("user_typing", handleUserTyping)
     socket.on("user_stop_typing", handleUserStopTyping)
+    socket.on("notifications_refresh", handleRefresh)
 
     return () => {
       socket.off("receive_message", handleReceiveMessage)
       socket.off("user_typing", handleUserTyping)
       socket.off("user_stop_typing", handleUserStopTyping)
+      socket.off("notifications_refresh", handleRefresh)
     }
-  }, [matchId, userId, markCurrentMatchAsRead])
+  }, [matchId, userId, markCurrentMatchAsRead, refreshChatState])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -187,13 +226,8 @@ export default function Chat() {
     } catch (err) {
       console.error("Send message error:", err)
 
-      if (err.response?.status === 403) {
-        setError("You are not authorized to send messages in this chat.")
-        return
-      }
-
-      if (err.response?.status === 404) {
-        setError("Chat not found.")
+      if (err.response?.status === 403 || err.response?.status === 404) {
+        exitChat()
         return
       }
 

@@ -85,7 +85,7 @@ This positions the platform as:
 
 ---
 
-# 📊 MVP Feature Build Roadmap (Technical Build Order)
+## 📊 MVP Feature Build Roadmap (Technical Build Order)
 
 ## 1. Account Creation Features
 **Affects:** Demand & Supply
@@ -105,11 +105,11 @@ This positions the platform as:
 | Feature Name | Description | Objective | Purpose | Build Status |
 |------|------|------|------|------|
 | Profile Setup | Users complete profile with bio and preferences | Enable identity representation | Allow users to present themselves | ✅ Implemented |
-| Profile Photo Upload | Users upload profile photos | Improve engagement | Provide visual representation | ⚠️ Partial (URL-based only) |
+| Profile Photo Upload | Users upload profile photos | Improve engagement | Provide visual representation | ✅ Implemented |
 | Interests & Lifestyle Fields | Users add hobbies and lifestyle preferences | Improve compatibility | Enable smarter match discovery | ✅ Implemented |
 | Relationship Goals Field | Users specify dating intentions | Clarify expectations | Encourage intentional dating | ✅ Implemented |
 | Edit Profile | Users can update their profile details | Maintain profile accuracy | Improve user experience | ✅ Implemented |
-| Update Photos | Users can replace or add profile photos | Improve profile presentation | Encourage profile freshness | ⚠️ Partial (URL-based only) |
+| Update Photos | Users can replace or add profile photos | Improve profile presentation | Encourage profile freshness | ✅ Implemented |
 
 ---
 
@@ -152,6 +152,7 @@ This positions the platform as:
 | Match Inbox | Match list displays latest message, timestamp, unread counts, and new match behavior | Improve messaging workflow | Provide conversation entry point | ✅ Implemented |
 | Unmatch | Users can remove existing matches | Give users control over interactions | Allow users to end unwanted matches | ✅ Implemented |
 | Chat Cleanup on Unmatch | Delete all messages when a match is removed | Maintain privacy and data consistency | Prevent chat history leaks | ✅ Implemented |
+| Suspension Match Removal | Suspended users are removed from matches during suspension | Enforce moderation across interaction layer | Prevent access to matches while suspended | ✅ Implemented |
 
 ---
 
@@ -168,6 +169,7 @@ This positions the platform as:
 | Mark as Read on Open | Messages marked as read when chat is opened | Maintain accuracy of unread state | Ensure correct notification behavior | ✅ Implemented |
 | Delete Message | Users can delete their own messages | Allow correction and control over conversations | Improve messaging experience | ✅ Implemented |
 | Messaging Rate Limiting | Limit number of messages sent per second | Prevent spam and abuse | Protect messaging infrastructure | ⚠️ Needs Validation |
+| Live Chat Removal on Suspension | Active chats become unavailable when user is suspended | Enforce moderation in real time | Prevent suspended users from staying in chat | ⚠️ Partial |
 
 ---
 
@@ -180,9 +182,12 @@ This positions the platform as:
 | Unblock Users | Users can remove previously blocked users | Allow users to reverse blocking decisions | Restore interaction permissions | ✅ Implemented |
 | Block Enforcement | Blocked users cannot appear in discovery or interact | Maintain safety boundaries | Prevent unwanted contact | ✅ Implemented |
 | User Reporting | Users can report suspicious accounts | Enable moderation | Reduce scams and abuse | ✅ Implemented |
+| Report Validation Rules | Prevent empty and duplicate reports | Improve moderation quality | Reduce spam reports | ✅ Implemented |
 | Profile Verification Badge | Verified users receive badges | Build trust | Increase platform credibility | ✅ Implemented |
-| Interaction Abuse Prevention | Prevent repeated likes or messaging spam | Protect platform integrity | Maintain fair user interaction | ✅ Implemented |
-| Identity Verification System | Users submit verification requests and admins approve/reject | Establish real user trust | Enable verified badge system | ✅ Implemented |
+| Interaction Abuse Prevention | Prevent repeated likes or spam | Protect platform integrity | Maintain fair usage | ✅ Implemented |
+| Identity Verification System | Users submit verification requests and admins review | Establish trust | Enable verified badge | ✅ Implemented |
+| Suspension Enforcement | Suspended users cannot log in, appear in discovery, matches, or messaging | Enforce platform rules | Remove unsafe users from ecosystem | ✅ Implemented |
+| Live Suspension Session Enforcement | Suspended users are forced out of active sessions | Enforce real-time moderation | Prevent continued access during suspension | ⚠️ Partial |
 
 ---
 
@@ -191,8 +196,8 @@ This positions the platform as:
 
 | Feature Name | Description | Objective | Purpose | Build Status |
 |------|------|------|------|------|
-| Account Settings | Users manage account preferences | Give users control over accounts | Improve usability | ✅ Implemented |
-| Delete Account | Users can remove their accounts | Support user autonomy | Maintain platform transparency | ✅ Implemented |
+| Account Settings | Users manage account preferences | Give users control | Improve usability | ✅ Implemented |
+| Delete Account | Users can remove their accounts | Support autonomy | Maintain transparency | ✅ Implemented |
 
 ---
 
@@ -201,10 +206,13 @@ This positions the platform as:
 
 | Feature Name | Description | Objective | Purpose | Build Status |
 |------|------|------|------|------|
-| New Match Notification | Notify users when a new match occurs | Improve engagement | Encourage users to start conversations | ✅ Implemented |
-| Message Notification | Notify users when they receive new messages | Maintain active conversations | Improve responsiveness | ⚠️ Partial (navbar unread badge + polling implemented) |
-| Like Notification | Notify users when someone likes their profile | Increase user engagement | Encourage profile interaction | ⚠️ Partial (incoming likes badge + polling implemented) |
-| Verification Status Notification | Notify users when verification is approved or rejected | Improve user feedback loop | Increase trust and transparency | ⚠️ Partial (status visible in product, no dedicated notification trigger) |
+| New Match Notification | Notify users of new matches | Improve engagement | Encourage conversation | ✅ Implemented |
+| Message Notification | Notify users of new messages | Maintain conversations | Improve responsiveness | ✅ Implemented |
+| Like Notification | Notify users of new likes | Increase engagement | Encourage interaction | ✅ Implemented |
+| Verification Status Notification | Notify verification results | Improve feedback loop | Increase trust | ⚠️ Partial |
+| Notification Consistency | Real-time updates without refresh | Improve UX reliability | Keep UI state accurate | ✅ Implemented |
+| Suspension Refresh Events | Matches/chats update on suspension | Extend moderation to UI | Remove users live | ⚠️ Partial |
+| Unsuspension Live Restoration | Matches/chats restore without refresh | Complete recovery flow | Restore interactions automatically | ⚠️ Partial |
 
 ---
 
@@ -213,10 +221,10 @@ This positions the platform as:
 
 | Feature Name | Description | Objective | Purpose | Build Status |
 |------|------|------|------|------|
-| Message Limits | Free users have limited daily messages | Encourage premium upgrade | Balance free and paid usage | ⬜ Not Built |
-| Premium Subscription | Paid plan unlocks full features | Generate platform revenue | Support freemium business model | ⬜ Not Built |
-| Unlimited Messaging | Premium users send unlimited messages | Improve interaction freedom | Provide subscription value | ⬜ Not Built |
-| Profile Boost | Premium users increase profile visibility | Improve match opportunities | Encourage premium upgrades | ⬜ Not Built |
+| Message Limits | Free users limited messages | Encourage upgrade | Balance usage | ⬜ Not Built |
+| Premium Subscription | Paid plan unlocks features | Generate revenue | Support business model | ⬜ Not Built |
+| Unlimited Messaging | Premium unlimited messaging | Improve usage | Provide value | ⬜ Not Built |
+| Profile Boost | Boost visibility | Increase matches | Encourage upgrade | ⬜ Not Built |
 
 ---
 
@@ -225,10 +233,12 @@ This positions the platform as:
 
 | Feature Name | Description | Objective | Purpose | Build Status |
 |------|------|------|------|------|
-| Report Review System | Admin can review reported users and resolve reports | Maintain platform safety | Remove abusive users and close moderation loop | ✅ Implemented |
-| User Suspension | Admin can temporarily suspend accounts | Enforce platform rules | Prevent misuse | ✅ Implemented |
-| User Deletion | Admin can permanently remove users | Maintain platform integrity | Protect community | ✅ Implemented |
-| Verification Review System | Admin can review and approve/reject verification requests | Enable identity verification workflow | Strengthen trust system | ✅ Implemented |
+| Report Review System | Admin reviews reports | Maintain safety | Close moderation loop | ✅ Implemented |
+| User Suspension | Admin suspends users | Enforce rules | Prevent misuse | ✅ Implemented |
+| User Deletion | Admin deletes users | Maintain integrity | Protect community | ✅ Implemented |
+| Verification Review System | Admin reviews verification | Enable identity validation | Strengthen trust | ✅ Implemented |
+| Suspension Propagation | Suspension removes user from discovery, matches, chats | Extend moderation coverage | Enforce safety across system | ✅ Implemented |
+| Unsuspension Restoration | Unsuspension restores previous relationships | Allow reversible moderation | Restore normal access | ✅ Implemented |
 
 ---
 

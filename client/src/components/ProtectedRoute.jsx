@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Navigate, useLocation } from "react-router-dom"
+import { Navigate, useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import api from "../api/axios"
 
@@ -9,27 +9,46 @@ export default function ProtectedRoute({
   requireProfile = false,
   guestOnly = false
 }) {
-  const { userId, isAdmin } = useAuth()
+  const auth = useAuth()
+  const userId = auth?.userId || localStorage.getItem("userId")
+  const isAdmin = auth?.isAdmin ?? localStorage.getItem("isAdmin")
+  const logout = auth?.logout
   const location = useLocation()
+  const navigate = useNavigate()
   const token = localStorage.getItem("token")
 
-  const [checkingProfile, setCheckingProfile] = useState(requireProfile)
-  const [hasProfile, setHasProfile] = useState(false)
+  const [checkingProfile, setCheckingProfile] = useState(false)
+  const [hasProfile, setHasProfile] = useState(null)
+  const [forceLogout, setForceLogout] = useState(false)
 
   useEffect(() => {
-    let isMounted = true
+    let cancelled = false
+
+    const handleSuspendedSession = () => {
+      if (cancelled) return
+
+      if (typeof logout === "function") {
+        logout()
+      } else {
+        localStorage.removeItem("token")
+        localStorage.removeItem("userId")
+        localStorage.removeItem("isAdmin")
+      }
+
+      setForceLogout(true)
+    }
 
     const checkProfile = async () => {
-      if (guestOnly || !requireProfile) {
-        if (isMounted) {
+      if (!requireProfile || guestOnly) {
+        if (!cancelled) {
           setCheckingProfile(false)
-          setHasProfile(false)
+          setHasProfile(null)
         }
         return
       }
 
       if (!userId || !token) {
-        if (isMounted) {
+        if (!cancelled) {
           setCheckingProfile(false)
           setHasProfile(false)
         }
@@ -37,40 +56,51 @@ export default function ProtectedRoute({
       }
 
       if (isAdmin === true || isAdmin === "true") {
-        if (isMounted) {
-          setHasProfile(true)
+        if (!cancelled) {
           setCheckingProfile(false)
+          setHasProfile(true)
         }
         return
       }
 
-      if (isMounted) {
+      if (!cancelled) {
         setCheckingProfile(true)
       }
 
       try {
-        await api.get(`/profiles/user/${userId}`)
+        const res = await api.get(`/profiles/user/${userId}`, {
+          headers: {
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache"
+          }
+        })
 
-        if (isMounted) {
-          setHasProfile(true)
+        if (!cancelled) {
+          setHasProfile(res.status >= 200 && res.status < 300)
         }
       } catch (error) {
+        if (cancelled) return
+
         if (error.response?.status === 404) {
-          if (isMounted) {
-            setHasProfile(false)
-          }
+          setHasProfile(false)
         } else if (error.response?.status === 403) {
-          if (isMounted) {
-            setHasProfile(true)
+          const message = error.response?.data?.message || ""
+
+          if (
+            message.toLowerCase().includes("suspended") ||
+            message.toLowerCase().includes("account is suspended")
+          ) {
+            handleSuspendedSession()
+            return
           }
+
+          setHasProfile(false)
         } else {
           console.error("ProtectedRoute profile check error:", error)
-          if (isMounted) {
-            setHasProfile(false)
-          }
+          setHasProfile(false)
         }
       } finally {
-        if (isMounted) {
+        if (!cancelled) {
           setCheckingProfile(false)
         }
       }
@@ -79,9 +109,25 @@ export default function ProtectedRoute({
     checkProfile()
 
     return () => {
-      isMounted = false
+      cancelled = true
     }
-  }, [guestOnly, requireProfile, userId, token, isAdmin])
+  }, [guestOnly, requireProfile, userId, token, isAdmin, logout])
+
+  useEffect(() => {
+    if (!forceLogout) return
+
+    navigate("/login", {
+      replace: true,
+      state: {
+        suspended: true,
+        message: "Your account is suspended."
+      }
+    })
+  }, [forceLogout, navigate])
+
+  if (forceLogout) {
+    return null
+  }
 
   if (guestOnly) {
     if (userId && token) {
@@ -99,8 +145,12 @@ export default function ProtectedRoute({
     return <p>Loading...</p>
   }
 
-  if (requireAuth && requireProfile && !hasProfile) {
+  if (requireAuth && requireProfile && hasProfile === false) {
     return <Navigate to="/create-profile" replace />
+  }
+
+  if (requireAuth && requireProfile && hasProfile === null) {
+    return <p>Loading...</p>
   }
 
   return children
