@@ -36,8 +36,13 @@ export default function Navbar() {
       setUnreadMessagesCount(Number(unreadRes.data?.count || 0))
     } catch (error) {
       console.error("Navbar count fetch error:", error)
+
+      // 🔥 CRITICAL: if suspended → force logout
+      if (error?.response?.status === 403) {
+        auth?.forceLogout?.()
+      }
     }
-  }, [userId])
+  }, [userId, auth])
 
   useEffect(() => {
     if (!userId) return
@@ -58,7 +63,13 @@ export default function Navbar() {
       fetchCounts()
     }
 
-    const handleRefresh = () => {
+    const handleRefresh = (data) => {
+      // 🔥 CRITICAL: detect suspension event
+      if (data?.type === "user_suspended" && data?.userId === userId) {
+        auth?.forceLogout?.()
+        return
+      }
+
       fetchCounts()
     }
 
@@ -75,7 +86,7 @@ export default function Navbar() {
       socket.off("notifications_refresh", handleRefresh)
       socket.off("new_message", handleNewMessage)
     }
-  }, [userId, fetchCounts])
+  }, [userId, fetchCounts, auth])
 
   const handleLogout = () => {
     auth?.logout?.()

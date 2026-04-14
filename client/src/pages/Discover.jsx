@@ -3,6 +3,7 @@ import api from "../api/axios"
 import { useAuth } from "../context/AuthContext"
 import Navbar from "../components/Navbar"
 import { useNavigate } from "react-router-dom"
+import socket from "../socket"
 
 const initialFilters = {
   minAge: "",
@@ -41,6 +42,10 @@ export default function Discover() {
       setFavoritedProfileIds(ids.map(id => id.toString()))
     } catch (err) {
       console.error("Favorites fetch error:", err)
+
+      if (err?.response?.status === 403) {
+        auth?.forceLogout?.()
+      }
     }
   }
 
@@ -93,6 +98,12 @@ export default function Discover() {
       }
     } catch (err) {
       console.error("Discover fetch error:", err)
+
+      if (err?.response?.status === 403) {
+        auth?.forceLogout?.()
+        return
+      }
+
       setProfiles([])
       setIncomingLikes([])
       setMode("")
@@ -109,6 +120,23 @@ export default function Discover() {
 
     fetchProfiles(initialFilters)
     fetchFavorites()
+
+    socket.emit("register_user", userId)
+
+    const handleRefresh = (data) => {
+      if (data?.type === "user_suspended" && data?.userId === userId) {
+        auth?.forceLogout?.()
+        return
+      }
+
+      fetchProfiles(filters, false)
+    }
+
+    socket.on("notifications_refresh", handleRefresh)
+
+    return () => {
+      socket.off("notifications_refresh", handleRefresh)
+    }
   }, [userId])
 
   const handleChange = (e) => {
@@ -148,6 +176,12 @@ export default function Discover() {
       )
     } catch (err) {
       console.error("Like error:", err)
+
+      if (err?.response?.status === 403) {
+        auth?.forceLogout?.()
+        return
+      }
+
       alert(err.response?.data?.message || "Failed to send like")
     }
   }
@@ -182,6 +216,12 @@ export default function Discover() {
       alert(res.data?.message || "Favorite updated")
     } catch (err) {
       console.error("Favorite toggle error:", err)
+
+      if (err?.response?.status === 403) {
+        auth?.forceLogout?.()
+        return
+      }
+
       alert(err.response?.data?.message || "Failed to update favorite")
     } finally {
       setFavoriteLoadingIds(prev => prev.filter(id => id !== profileId))

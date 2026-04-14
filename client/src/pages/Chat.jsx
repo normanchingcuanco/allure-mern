@@ -65,7 +65,13 @@ export default function Chat() {
     } catch (err) {
       console.error("Fetch messages error:", err)
 
-      if (err.response?.status === 403 || err.response?.status === 404) {
+      // 🔥 FIX: if suspended → force logout
+      if (err.response?.status === 403) {
+        auth?.forceLogout?.()
+        return false
+      }
+
+      if (err.response?.status === 404) {
         exitChat()
         return false
       }
@@ -73,7 +79,7 @@ export default function Chat() {
       setError("Failed to load messages.")
       return false
     }
-  }, [matchId, userId, exitChat])
+  }, [matchId, userId, exitChat, auth])
 
   const fetchMatch = useCallback(async () => {
     if (!userId || !matchId) return false
@@ -111,7 +117,13 @@ export default function Chat() {
     } catch (err) {
       console.error("Fetch match error:", err)
 
-      if (err.response?.status === 403 || err.response?.status === 404) {
+      // 🔥 FIX
+      if (err.response?.status === 403) {
+        auth?.forceLogout?.()
+        return false
+      }
+
+      if (err.response?.status === 404) {
         exitChat()
         return false
       }
@@ -119,7 +131,7 @@ export default function Chat() {
       setError("Failed to load chat.")
       return false
     }
-  }, [userId, matchId, exitChat])
+  }, [userId, matchId, exitChat, auth])
 
   const refreshChatState = useCallback(async () => {
     const matchExists = await fetchMatch()
@@ -177,7 +189,13 @@ export default function Chat() {
       setTypingUser(false)
     }
 
-    const handleRefresh = async () => {
+    const handleRefresh = async (data) => {
+      // 🔥 FIX: socket suspension enforcement
+      if (data?.type === "user_suspended" && data?.userId === userId) {
+        auth?.forceLogout?.()
+        return
+      }
+
       await refreshChatState()
     }
 
@@ -192,7 +210,7 @@ export default function Chat() {
       socket.off("user_stop_typing", handleUserStopTyping)
       socket.off("notifications_refresh", handleRefresh)
     }
-  }, [matchId, userId, markCurrentMatchAsRead, refreshChatState])
+  }, [matchId, userId, markCurrentMatchAsRead, refreshChatState, auth])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -226,7 +244,13 @@ export default function Chat() {
     } catch (err) {
       console.error("Send message error:", err)
 
-      if (err.response?.status === 403 || err.response?.status === 404) {
+      // 🔥 FIX
+      if (err.response?.status === 403) {
+        auth?.forceLogout?.()
+        return
+      }
+
+      if (err.response?.status === 404) {
         exitChat()
         return
       }
@@ -262,9 +286,7 @@ export default function Chat() {
           <h2>{receiverName}</h2>
         </div>
 
-        {error && (
-          <p style={{ color: "red" }}>{error}</p>
-        )}
+        {error && <p style={{ color: "red" }}>{error}</p>}
 
         <div
           style={{

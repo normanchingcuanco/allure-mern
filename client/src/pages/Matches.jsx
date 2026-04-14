@@ -35,11 +35,18 @@ export default function Matches() {
       setMatches(normalizedMatches)
     } catch (error) {
       console.error(error)
+
+      // 🔥 FIX: force logout if suspended
+      if (error?.response?.status === 403) {
+        auth?.forceLogout?.()
+        return
+      }
+
       setMatches([])
     } finally {
       setLoading(false)
     }
-  }, [userId])
+  }, [userId, auth])
 
   useEffect(() => {
     if (!userId) return
@@ -59,7 +66,13 @@ export default function Matches() {
 
     clearNewMatches()
 
-    const handleRefresh = () => {
+    const handleRefresh = (data) => {
+      // 🔥 FIX: force logout if suspended via socket
+      if (data?.type === "user_suspended" && data?.userId === userId) {
+        auth?.forceLogout?.()
+        return
+      }
+
       fetchMatches()
     }
 
@@ -68,7 +81,7 @@ export default function Matches() {
     return () => {
       socket.off("notifications_refresh", handleRefresh)
     }
-  }, [userId, fetchMatches])
+  }, [userId, fetchMatches, auth])
 
   const handleUnmatch = async (matchId) => {
     const confirmed = window.confirm("Are you sure you want to unmatch?")
@@ -84,6 +97,13 @@ export default function Matches() {
       setMatches((prev) => prev.filter((match) => match._id !== matchId))
     } catch (error) {
       console.error(error)
+
+      // 🔥 FIX
+      if (error?.response?.status === 403) {
+        auth?.forceLogout?.()
+        return
+      }
+
       alert(error.response?.data?.message || "Failed to unmatch")
     } finally {
       setUnmatchingId("")
@@ -115,6 +135,13 @@ export default function Matches() {
       alert("User blocked successfully")
     } catch (error) {
       console.error(error)
+
+      // 🔥 FIX
+      if (error?.response?.status === 403) {
+        auth?.forceLogout?.()
+        return
+      }
+
       alert(error.response?.data?.message || "Failed to block user")
     } finally {
       setBlockingId("")
@@ -140,9 +167,7 @@ export default function Matches() {
 
         {loading && <p>Loading matches...</p>}
 
-        {!loading && matches.length === 0 && (
-          <p>No matches yet</p>
-        )}
+        {!loading && matches.length === 0 && <p>No matches yet</p>}
 
         {!loading &&
           matches.map((match) => {

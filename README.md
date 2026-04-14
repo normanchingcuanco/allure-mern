@@ -169,7 +169,7 @@ This positions the platform as:
 | Mark as Read on Open | Messages marked as read when chat is opened | Maintain accuracy of unread state | Ensure correct notification behavior | ✅ Implemented |
 | Delete Message | Users can delete their own messages | Allow correction and control over conversations | Improve messaging experience | ✅ Implemented |
 | Messaging Rate Limiting | Limit number of messages sent per second | Prevent spam and abuse | Protect messaging infrastructure | ⚠️ Needs Validation |
-| Live Chat Removal on Suspension | Active chats become unavailable when user is suspended | Enforce moderation in real time | Prevent suspended users from staying in chat | ⚠️ Partial |
+| Live Chat Removal on Suspension | Active chats become unavailable when user is suspended | Enforce moderation in real time | Prevent suspended users from staying in chat | ✅ Implemented |
 
 ---
 
@@ -187,7 +187,8 @@ This positions the platform as:
 | Interaction Abuse Prevention | Prevent repeated likes or spam | Protect platform integrity | Maintain fair usage | ✅ Implemented |
 | Identity Verification System | Users submit verification requests and admins review | Establish trust | Enable verified badge | ✅ Implemented |
 | Suspension Enforcement | Suspended users cannot log in, appear in discovery, matches, or messaging | Enforce platform rules | Remove unsafe users from ecosystem | ✅ Implemented |
-| Live Suspension Session Enforcement | Suspended users are forced out of active sessions | Enforce real-time moderation | Prevent continued access during suspension | ⚠️ Partial |
+| Live Suspension Session Enforcement | Suspended users are forced out of active sessions | Enforce real-time moderation | Prevent continued access during suspension | ✅ Implemented |
+| Suspended Session Fallback Logout | Protected pages force logout on suspended-user 403 responses | Strengthen enforcement reliability | Prevent suspended users from staying inside stale sessions if socket refresh fails | ✅ Implemented |
 
 ---
 
@@ -211,8 +212,8 @@ This positions the platform as:
 | Like Notification | Notify users of new likes | Increase engagement | Encourage interaction | ✅ Implemented |
 | Verification Status Notification | Notify verification results | Improve feedback loop | Increase trust | ⚠️ Partial |
 | Notification Consistency | Real-time updates without refresh | Improve UX reliability | Keep UI state accurate | ✅ Implemented |
-| Suspension Refresh Events | Matches/chats update on suspension | Extend moderation to UI | Remove users live | ⚠️ Partial |
-| Unsuspension Live Restoration | Matches/chats restore without refresh | Complete recovery flow | Restore interactions automatically | ⚠️ Partial |
+| Suspension Refresh Events | Matches/chats update on suspension | Extend moderation to UI | Remove users live | ✅ Implemented |
+| Unsuspension Live Restoration | Matches/chats restore without refresh | Complete recovery flow | Restore interactions automatically | ✅ Implemented |
 
 ---
 

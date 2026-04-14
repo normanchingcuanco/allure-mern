@@ -2,39 +2,51 @@ import { createContext, useContext, useState } from "react"
 
 const AuthContext = createContext()
 
-export function AuthProvider({ children }) {
+export const AuthProvider = ({ children }) => {
+  const [userId, setUserId] = useState(localStorage.getItem("userId") || null)
+  const [token, setToken] = useState(localStorage.getItem("token") || null)
+  const [isAdmin, setIsAdmin] = useState(localStorage.getItem("isAdmin") === "true")
 
-  const [userId, setUserId] = useState(localStorage.getItem("userId"))
-  const [token, setToken] = useState(localStorage.getItem("token"))
-  const [isAdmin, setIsAdmin] = useState(localStorage.getItem("isAdmin"))
+  const login = (data) => {
+    localStorage.setItem("token", data.token)
+    localStorage.setItem("userId", data.userId)
+    localStorage.setItem("isAdmin", data.isAdmin)
 
-  const login = (userId, token, isAdmin = false) => {
-    localStorage.setItem("userId", userId)
-    localStorage.setItem("token", token)
-    localStorage.setItem("isAdmin", String(isAdmin))
-
-    setUserId(userId)
-    setToken(token)
-    setIsAdmin(String(isAdmin))
+    setToken(data.token)
+    setUserId(data.userId)
+    setIsAdmin(data.isAdmin)
   }
 
   const logout = () => {
-    localStorage.removeItem("userId")
     localStorage.removeItem("token")
+    localStorage.removeItem("userId")
     localStorage.removeItem("isAdmin")
 
-    setUserId(null)
     setToken(null)
-    setIsAdmin(null)
+    setUserId(null)
+    setIsAdmin(false)
+  }
+
+  // 🔥 NEW: force logout (used for suspension)
+  const forceLogout = () => {
+    logout()
+    window.location.href = "/login"
   }
 
   return (
-    <AuthContext.Provider value={{ userId, token, isAdmin, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        userId,
+        token,
+        isAdmin,
+        login,
+        logout,
+        forceLogout // 👈 expose this
+      }}
+    >
       {children}
     </AuthContext.Provider>
   )
 }
 
-export function useAuth() {
-  return useContext(AuthContext)
-}
+export const useAuth = () => useContext(AuthContext)

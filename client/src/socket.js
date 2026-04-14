@@ -1,10 +1,7 @@
 import { io } from "socket.io-client"
 
-const SOCKET_URL = "http://localhost:5000"
-
-const socket = io(SOCKET_URL, {
-  autoConnect: true,
-  transports: ["websocket"]
+const socket = io("http://localhost:5000", {
+  autoConnect: false // 🔥 prevent auto connect without userId
 })
 
 export default socket

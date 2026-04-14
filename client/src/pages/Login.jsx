@@ -17,55 +17,32 @@ export default function Login() {
     e.preventDefault()
 
     try {
-      setLoading(true)
-
       const res = await api.post("/auth/login", {
         email,
         password
       })
 
-      console.log("LOGIN RESPONSE:", res.data)
-      console.log("LOGIN isAdmin:", res.data.isAdmin)
-      console.log("LOGIN email:", res.data.email)
-      console.log("LOGIN userId:", res.data.userId)
+      const data = res.data
 
-      const userId =
-        res.data.user?._id ||
-        res.data.user?.id ||
-        res.data.userId ||
-        res.data.id
-
-      const token = res.data.token
-      const isAdmin = Boolean(res.data.isAdmin)
-
-      if (!userId || !token) {
-        throw new Error("Invalid login response structure")
+      // 🔥 FIX: normalize values
+      const userData = {
+        token: data.token,
+        userId: data.userId,
+        isAdmin: String(data.isAdmin) // ensure "true"/"false"
       }
 
-      login(userId, token, isAdmin)
+      login(userData)
 
-      if (isAdmin) {
+      // 🔥 navigate based on role
+      if (data.isAdmin) {
+        navigate("/admin/reports")
+      } else {
         navigate("/discover")
-        return
       }
 
-      try {
-        await api.get(`/profiles/user/${userId}`)
-        navigate("/discover")
-      } catch (error) {
-        if (error.response?.status === 404) {
-          navigate("/create-profile")
-          return
-        }
-
-        console.error("Profile check failed:", error)
-        alert(error.response?.data?.message || "Unable to complete login routing")
-      }
     } catch (err) {
       console.error(err)
       alert(err.response?.data?.message || "Login failed")
-    } finally {
-      setLoading(false)
     }
   }
 
