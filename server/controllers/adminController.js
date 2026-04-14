@@ -4,6 +4,26 @@ import Report from "../models/Report.js"
 import Match from "../models/Match.js"
 import { emitToUsers } from "../socket.js"
 
+const getAdminUserIds = async () => {
+  const admins = await User.find({
+    $or: [
+      { isAdmin: true },
+      { role: "admin" }
+    ]
+  }).select("_id")
+
+  return admins.map((admin) => admin._id.toString())
+}
+
+const emitAdminReportsRefresh = async (payload = {}) => {
+  const adminUserIds = await getAdminUserIds()
+
+  emitToUsers(adminUserIds, "notifications_refresh", {
+    type: "admin_reports_updated",
+    ...payload
+  })
+}
+
 /* Get all reports */
 export const getReports = async (req, res) => {
   try {
@@ -56,6 +76,11 @@ export const suspendUser = async (req, res) => {
       userId: userId.toString()
     })
 
+    await emitAdminReportsRefresh({
+      action: "user_suspended",
+      userId: userId.toString()
+    })
+
     res.json({
       message: "User suspended",
       user
@@ -101,6 +126,11 @@ export const unsuspendUser = async (req, res) => {
       userId: userId.toString()
     })
 
+    await emitAdminReportsRefresh({
+      action: "user_unsuspended",
+      userId: userId.toString()
+    })
+
     res.json({
       message: "User unsuspended",
       user
@@ -141,6 +171,11 @@ export const resolveReport = async (req, res) => {
       .populate("reportedUserId", "email isSuspended")
       .populate("reviewedBy", "email")
 
+    await emitAdminReportsRefresh({
+      action: "resolved",
+      reportId: report._id.toString()
+    })
+
     res.json({
       message: "Report resolved",
       report: updatedReport
@@ -165,6 +200,11 @@ export const deleteUser = async (req, res) => {
 
     const profile = await Profile.findOneAndDelete({ userId })
     const user = await User.findByIdAndDelete(userId)
+
+    await emitAdminReportsRefresh({
+      action: "user_deleted",
+      userId: userId.toString()
+    })
 
     res.json({
       message: "User deleted",

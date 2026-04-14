@@ -1,6 +1,18 @@
 import VerificationRequest from "../models/VerificationRequest.js"
 import Profile from "../models/Profile.js"
 import User from "../models/User.js"
+import { emitToUsers } from "../socket.js"
+
+const getAdminUserIds = async () => {
+  const admins = await User.find({
+    $or: [
+      { isAdmin: true },
+      { role: "admin" }
+    ]
+  }).select("_id")
+
+  return admins.map((admin) => admin._id.toString())
+}
 
 export const submitVerificationRequest = async (req, res) => {
   try {
@@ -47,6 +59,15 @@ export const submitVerificationRequest = async (req, res) => {
     })
 
     await verificationRequest.save()
+
+    const adminUserIds = await getAdminUserIds()
+
+    emitToUsers(adminUserIds, "notifications_refresh", {
+      type: "verification_requests_updated",
+      action: "submitted",
+      verificationRequestId: verificationRequest._id.toString(),
+      userId: userId.toString()
+    })
 
     res.status(201).json({
       message: "Verification request submitted successfully",
@@ -163,6 +184,17 @@ export const approveVerificationRequest = async (req, res) => {
     profile.isVerified = true
     await profile.save()
 
+    emitToUsers(
+      [verificationRequest.userId?.toString(), reviewedBy?.toString()].filter(Boolean),
+      "notifications_refresh",
+      {
+        type: "verification_requests_updated",
+        action: "approved",
+        verificationRequestId: verificationRequest._id.toString(),
+        userId: verificationRequest.userId.toString()
+      }
+    )
+
     res.json({
       message: "Verification request approved successfully",
       verificationRequest,
@@ -210,6 +242,17 @@ export const rejectVerificationRequest = async (req, res) => {
     verificationRequest.rejectionReason = rejectionReason || "Rejected"
 
     await verificationRequest.save()
+
+    emitToUsers(
+      [verificationRequest.userId?.toString(), reviewedBy?.toString()].filter(Boolean),
+      "notifications_refresh",
+      {
+        type: "verification_requests_updated",
+        action: "rejected",
+        verificationRequestId: verificationRequest._id.toString(),
+        userId: verificationRequest.userId.toString()
+      }
+    )
 
     res.json({
       message: "Verification request rejected successfully",

@@ -70,6 +70,11 @@ export default function IncomingLikes() {
     }
   }
 
+  const viewProfile = (senderId) => {
+    if (!senderId) return
+    navigate(`/profile/${senderId}`)
+  }
+
   return (
     <>
       <Navbar />
@@ -92,9 +97,21 @@ export default function IncomingLikes() {
             >
               <p><strong>Email:</strong> {like.senderId?.email || "Unknown"}</p>
 
-              <button onClick={() => likeBack(like.senderId?._id)}>
-                Like Back
-              </button>
+              <div
+                style={{
+                  display: "flex",
+                  gap: "10px",
+                  flexWrap: "wrap"
+                }}
+              >
+                <button onClick={() => viewProfile(like.senderId?._id)}>
+                  View Profile
+                </button>
+
+                <button onClick={() => likeBack(like.senderId?._id)}>
+                  Like Back
+                </button>
+              </div>
             </div>
           ))
         )}

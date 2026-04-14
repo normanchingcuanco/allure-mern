@@ -2,6 +2,8 @@ import Like from "../models/Like.js"
 import Profile from "../models/Profile.js"
 import User from "../models/User.js"
 import Block from "../models/Block.js"
+import Match from "../models/Match.js"
+import Report from "../models/Report.js"
 
 const MAX_PHOTOS = 6
 
@@ -216,6 +218,24 @@ export const discoverProfiles = async (req, res) => {
     }
 
     if (currentUser.gender === "female") {
+      const matches = await Match.find({
+        users: userId
+      }).select("users")
+
+      const matchedUserIds = matches.flatMap(match =>
+        match.users
+          .map(id => id.toString())
+          .filter(id => id !== userId.toString())
+      )
+
+      const reports = await Report.find({
+        reporterId: userId
+      }).select("reportedUserId")
+
+      const reportedUserIds = reports
+        .map(report => report.reportedUserId?.toString())
+        .filter(Boolean)
+
       const likes = await Like.find({ receiverId: userId })
         .populate({
           path: "senderId",
@@ -225,7 +245,10 @@ export const discoverProfiles = async (req, res) => {
 
       const filteredLikes = likes.filter(like => {
         if (!like.senderId) return false
-        return like.senderId.isSuspended !== true
+        if (like.senderId.isSuspended === true) return false
+        if (matchedUserIds.includes(like.senderId._id.toString())) return false
+        if (reportedUserIds.includes(like.senderId._id.toString())) return false
+        return true
       })
 
       return res.json({

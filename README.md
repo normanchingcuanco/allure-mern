@@ -124,6 +124,7 @@ This positions the platform as:
 | Profile Detail View | Users open full profile pages | Provide deeper user information | Help users decide on interaction | ✅ Implemented |
 | Search Filters | Users filter profiles by preferences | Improve discovery efficiency | Help users find compatible matches | ✅ Implemented |
 | Supply Discovery Logic | Female users primarily see incoming likes instead of browsing all profiles | Align with marketplace model | Maintain supply–demand balance | ✅ Implemented |
+| Reported User Discovery Filtering | Reported users are removed from female incoming-likes discovery mode | Enforce safety after reporting | Prevent re-surfacing reported users in female home flow | ✅ Implemented |
 
 ---
 
@@ -139,6 +140,8 @@ This positions the platform as:
 | Favorite Profiles | Users bookmark profiles | Save interesting profiles | Encourage return engagement | ✅ Implemented |
 | Favorite Toggle | Users can favorite and unfavorite from Discover | Improve saved-profile control | Let users manage bookmarks without leaving discovery | ✅ Implemented |
 | Message Requests | Users send messages before matching | Enable direct interaction | Increase conversation opportunities | ✅ Implemented |
+| Female Direct Report Access | Female users can open male profiles from Incoming Likes and Matches and submit reports without manual userId entry | Close reporting gap | Make moderation reachable from normal UI flow | ✅ Implemented |
+| Reported User Incoming Likes Filtering | Reported users disappear from female Incoming Likes and related badge counts | Enforce post-report safety | Prevent reported users from remaining visible in active like queues | ✅ Implemented |
 
 ---
 
@@ -210,10 +213,14 @@ This positions the platform as:
 | New Match Notification | Notify users of new matches | Improve engagement | Encourage conversation | ✅ Implemented |
 | Message Notification | Notify users of new messages | Maintain conversations | Improve responsiveness | ✅ Implemented |
 | Like Notification | Notify users of new likes | Increase engagement | Encourage interaction | ✅ Implemented |
-| Verification Status Notification | Notify verification results | Improve feedback loop | Increase trust | ⚠️ Partial |
+| Verification Status Notification | Notify verification results | Improve feedback loop | Increase trust | ✅ Implemented |
 | Notification Consistency | Real-time updates without refresh | Improve UX reliability | Keep UI state accurate | ✅ Implemented |
 | Suspension Refresh Events | Matches/chats update on suspension | Extend moderation to UI | Remove users live | ✅ Implemented |
 | Unsuspension Live Restoration | Matches/chats restore without refresh | Complete recovery flow | Restore interactions automatically | ✅ Implemented |
+| Admin Report Notification Badge | Admin navbar shows pending report badge and updates live when new reports arrive | Improve admin visibility | Surface moderation work immediately | ✅ Implemented |
+| Admin Reports Live Refresh | Admin reports page updates without logout/login and without full-page flicker | Improve moderation workflow | Keep report queue current in real time | ✅ Implemented |
+| Admin Verification Request Badge | Admin verification page/navbar should show pending verification badge and update live when new requests arrive | Improve admin visibility | Surface verification review work immediately | ⬜ Not Built |
+| Admin Blocked User Request Badge | Admin should receive badge-style live updates for blocked-user-related moderation queue using same behavior as admin reports | Improve moderation visibility | Keep admin aware of new safety queue items immediately | ⬜ Not Built |
 
 ---
 
@@ -240,6 +247,7 @@ This positions the platform as:
 | Verification Review System | Admin reviews verification | Enable identity validation | Strengthen trust | ✅ Implemented |
 | Suspension Propagation | Suspension removes user from discovery, matches, chats | Extend moderation coverage | Enforce safety across system | ✅ Implemented |
 | Unsuspension Restoration | Unsuspension restores previous relationships | Allow reversible moderation | Restore normal access | ✅ Implemented |
+| Admin Reports Live Moderation Workflow | New reports appear live for admins with badge support and auto-refreshing queue | Improve moderation speed | Let admins act on reports without relogin | ✅ Implemented |
 
 ---
 

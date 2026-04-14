@@ -10,39 +10,60 @@ export default function Navbar() {
   const location = useLocation()
 
   const userId = auth?.userId || localStorage.getItem("userId")
-  const isAdmin = (auth?.isAdmin || localStorage.getItem("isAdmin")) === "true"
+  const isAdmin = String(auth?.isAdmin ?? localStorage.getItem("isAdmin")) === "true"
 
   const [incomingLikesCount, setIncomingLikesCount] = useState(0)
   const [newMatchesCount, setNewMatchesCount] = useState(0)
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0)
+  const [pendingReportsCount, setPendingReportsCount] = useState(0)
 
   const fetchCounts = useCallback(async () => {
     if (!userId) {
       setIncomingLikesCount(0)
       setNewMatchesCount(0)
       setUnreadMessagesCount(0)
+      setPendingReportsCount(0)
       return
     }
 
     try {
-      const [likesRes, matchesRes, unreadRes] = await Promise.all([
+      const requests = [
         api.get(`/likes/incoming/count/${userId}`),
         api.get(`/matches/new-count/${userId}`),
         api.get(`/messages/unread-count/${userId}`)
-      ])
+      ]
+
+      if (isAdmin) {
+        requests.push(api.get("/admin/reports"))
+      }
+
+      const responses = await Promise.all(requests)
+
+      const likesRes = responses[0]
+      const matchesRes = responses[1]
+      const unreadRes = responses[2]
+      const reportsRes = responses[3]
 
       setIncomingLikesCount(Number(likesRes.data?.count || 0))
       setNewMatchesCount(Number(matchesRes.data?.count || 0))
       setUnreadMessagesCount(Number(unreadRes.data?.count || 0))
+
+      if (isAdmin) {
+        const reports = Array.isArray(reportsRes?.data) ? reportsRes.data : []
+        const pendingCount = reports.filter((report) => report?.status !== "resolved").length
+        setPendingReportsCount(pendingCount)
+      } else {
+        setPendingReportsCount(0)
+      }
     } catch (error) {
       console.error("Navbar count fetch error:", error)
 
-      // 🔥 CRITICAL: if suspended → force logout
       if (error?.response?.status === 403) {
         auth?.forceLogout?.()
+        return
       }
     }
-  }, [userId, auth])
+  }, [userId, isAdmin, auth])
 
   useEffect(() => {
     if (!userId) return
@@ -64,7 +85,6 @@ export default function Navbar() {
     }
 
     const handleRefresh = (data) => {
-      // 🔥 CRITICAL: detect suspension event
       if (data?.type === "user_suspended" && data?.userId === userId) {
         auth?.forceLogout?.()
         return
@@ -77,11 +97,22 @@ export default function Navbar() {
       fetchCounts()
     }
 
+    const handleWindowFocus = () => {
+      fetchCounts()
+    }
+
+    const pollingInterval = setInterval(() => {
+      fetchCounts()
+    }, 5000)
+
+    window.addEventListener("focus", handleWindowFocus)
     socket.on("connect", handleConnect)
     socket.on("notifications_refresh", handleRefresh)
     socket.on("new_message", handleNewMessage)
 
     return () => {
+      clearInterval(pollingInterval)
+      window.removeEventListener("focus", handleWindowFocus)
       socket.off("connect", handleConnect)
       socket.off("notifications_refresh", handleRefresh)
       socket.off("new_message", handleNewMessage)
@@ -180,6 +211,9 @@ export default function Navbar() {
 
           <Link to="/admin/reports" style={linkStyle("/admin/reports")}>
             Admin Reports
+            {pendingReportsCount > 0 && (
+              <span style={badgeStyle}>{pendingReportsCount}</span>
+            )}
           </Link>
         </>
       )}

@@ -14,6 +14,7 @@ export default function Profile() {
   const [message, setMessage] = useState("")
   const [blocking, setBlocking] = useState(false)
   const [sendingRequest, setSendingRequest] = useState(false)
+  const [submittingReport, setSubmittingReport] = useState(false)
   const [loading, setLoading] = useState(true)
   const [accessError, setAccessError] = useState("")
 
@@ -44,7 +45,6 @@ export default function Profile() {
     fetchProfile()
   }, [fetchProfile])
 
-  // 🔥 REALTIME SOCKET LISTENER
   useEffect(() => {
     if (!currentUserId) return
 
@@ -63,7 +63,6 @@ export default function Profile() {
 
       await fetchProfile()
 
-      // immediate UI enforcement
       if (
         payload.type === "user_blocked" &&
         payload.blockedId === currentUserId
@@ -80,7 +79,6 @@ export default function Profile() {
     }
   }, [currentUserId, fetchProfile])
 
-  // 🔥 FALLBACK (prevents missed socket events)
   useEffect(() => {
     const handleFocus = () => {
       console.log("Profile focus refresh")
@@ -120,25 +118,47 @@ export default function Profile() {
   }
 
   const handleReport = async () => {
+    if (!currentUserId) {
+      alert("You must be logged in to submit a report")
+      return
+    }
+
     if (!reportReason) {
       alert("Please select a reason")
       return
     }
 
+    const reportedUserId =
+      profile?.userId?._id || profile?.userId || userId
+
+    if (!reportedUserId) {
+      alert("Unable to determine which user to report")
+      return
+    }
+
+    if (currentUserId === reportedUserId) {
+      alert("You cannot report yourself")
+      return
+    }
+
     try {
-      await api.post("/reports", {
+      setSubmittingReport(true)
+
+      const res = await api.post("/reports", {
         reporterId: currentUserId,
-        reportedUserId: userId,
+        reportedUserId,
         reason: reportReason,
         description: reportDescription.trim()
       })
 
-      alert("Report submitted")
+      alert(res.data?.message || "Report submitted")
       setReportReason("")
       setReportDescription("")
     } catch (err) {
-      console.error(err)
-      alert("Failed to submit report")
+      console.error("Report submit error:", err)
+      alert(err.response?.data?.message || "Failed to submit report")
+    } finally {
+      setSubmittingReport(false)
     }
   }
 
@@ -158,7 +178,6 @@ export default function Profile() {
       setTimeout(() => {
         navigate("/blocked-users")
       }, 100)
-
     } catch (error) {
       console.error(error)
       alert(error.response?.data?.message || "Failed to block user")
@@ -303,8 +322,8 @@ export default function Profile() {
 
       <br /><br />
 
-      <button onClick={handleReport}>
-        Submit Report
+      <button onClick={handleReport} disabled={submittingReport}>
+        {submittingReport ? "Submitting..." : "Submit Report"}
       </button>
 
       <hr />

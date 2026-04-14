@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import api from "../api/axios"
 import Navbar from "../components/Navbar"
 import { useAuth } from "../context/AuthContext"
@@ -7,6 +7,7 @@ import socket from "../socket"
 
 export default function Matches() {
   const auth = useAuth()
+  const navigate = useNavigate()
   const userId = auth?.userId || localStorage.getItem("userId")
 
   const [matches, setMatches] = useState([])
@@ -36,7 +37,6 @@ export default function Matches() {
     } catch (error) {
       console.error(error)
 
-      // 🔥 FIX: force logout if suspended
       if (error?.response?.status === 403) {
         auth?.forceLogout?.()
         return
@@ -67,7 +67,6 @@ export default function Matches() {
     clearNewMatches()
 
     const handleRefresh = (data) => {
-      // 🔥 FIX: force logout if suspended via socket
       if (data?.type === "user_suspended" && data?.userId === userId) {
         auth?.forceLogout?.()
         return
@@ -98,7 +97,6 @@ export default function Matches() {
     } catch (error) {
       console.error(error)
 
-      // 🔥 FIX
       if (error?.response?.status === 403) {
         auth?.forceLogout?.()
         return
@@ -136,7 +134,6 @@ export default function Matches() {
     } catch (error) {
       console.error(error)
 
-      // 🔥 FIX
       if (error?.response?.status === 403) {
         auth?.forceLogout?.()
         return
@@ -146,6 +143,15 @@ export default function Matches() {
     } finally {
       setBlockingId("")
     }
+  }
+
+  const handleViewProfile = (otherUserId) => {
+    if (!otherUserId) {
+      alert("Unable to open profile")
+      return
+    }
+
+    navigate(`/profile/${otherUserId}`)
   }
 
   const formatTime = (value) => {
@@ -172,6 +178,7 @@ export default function Matches() {
         {!loading &&
           matches.map((match) => {
             const otherUserEmail = match?.otherUser?.email || "User"
+            const otherUserId = match?.otherUser?._id || ""
             const unreadCount = Number(match?.unreadCount || 0)
             const lastMessageText = match?.lastMessage?.text || "No messages yet"
             const lastMessageTime = match?.lastMessage?.createdAt
@@ -230,6 +237,10 @@ export default function Matches() {
                 )}
 
                 <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                  <button onClick={() => handleViewProfile(otherUserId)}>
+                    View Profile
+                  </button>
+
                   <Link to={`/chat/${match._id}`}>
                     <button>Open Chat</button>
                   </Link>

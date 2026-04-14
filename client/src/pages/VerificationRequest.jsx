@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import api from "../api/axios"
 import Navbar from "../components/Navbar"
+import socket from "../socket"
 
 export default function VerificationRequest() {
   const userId = localStorage.getItem("userId")
@@ -11,20 +12,68 @@ export default function VerificationRequest() {
   const [requests, setRequests] = useState([])
   const [submitting, setSubmitting] = useState(false)
 
-  const fetchMyRequests = async () => {
+  const fetchMyRequests = useCallback(async () => {
+    if (!userId) return
+
     try {
       const res = await api.get(`/verification-requests/mine/${userId}`)
-      setRequests(res.data)
+      setRequests(res.data || [])
     } catch (error) {
       console.error(error)
     }
-  }
+  }, [userId])
 
   useEffect(() => {
-    if (userId) {
+    if (!userId) return
+
+    fetchMyRequests()
+  }, [userId, fetchMyRequests])
+
+  useEffect(() => {
+    if (!userId) return
+
+    const registerCurrentUser = () => {
+      socket.emit("register_user", userId)
+    }
+
+    if (!socket.connected) {
+      socket.connect()
+    }
+
+    registerCurrentUser()
+
+    const handleConnect = () => {
+      registerCurrentUser()
       fetchMyRequests()
     }
-  }, [userId])
+
+    const handleRefresh = (data) => {
+      if (!data) return
+
+      if (
+        data.type === "verification_requests_updated" &&
+        data.userId === userId
+      ) {
+        fetchMyRequests()
+
+        if (data.action === "approved") {
+          alert("Your verification request was approved.")
+        }
+
+        if (data.action === "rejected") {
+          alert("Your verification request was rejected.")
+        }
+      }
+    }
+
+    socket.on("connect", handleConnect)
+    socket.on("notifications_refresh", handleRefresh)
+
+    return () => {
+      socket.off("connect", handleConnect)
+      socket.off("notifications_refresh", handleRefresh)
+    }
+  }, [userId, fetchMyRequests])
 
   const handleSubmit = async (e) => {
     e.preventDefault()

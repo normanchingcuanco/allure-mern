@@ -1,6 +1,7 @@
 import Like from "../models/Like.js"
 import Match from "../models/Match.js"
 import User from "../models/User.js"
+import Report from "../models/Report.js"
 import { emitToUsers } from "../socket.js"
 
 const getMatchedUserIds = async (userId) => {
@@ -15,6 +16,16 @@ const getMatchedUserIds = async (userId) => {
   )
 
   return matchedUserIds
+}
+
+const getReportedUserIdsByReporter = async (userId) => {
+  const reports = await Report.find({
+    reporterId: userId
+  }).select("reportedUserId")
+
+  return reports
+    .map((report) => report.reportedUserId?.toString())
+    .filter(Boolean)
 }
 
 const emitNotificationRefresh = (userIds = [], payload = {}) => {
@@ -157,6 +168,7 @@ export const getReceivedLikes = async (req, res) => {
   try {
     const { userId } = req.params
     const matchedUserIds = await getMatchedUserIds(userId)
+    const reportedUserIds = await getReportedUserIdsByReporter(userId)
 
     const likes = await Like.find({
       receiverId: userId
@@ -166,6 +178,7 @@ export const getReceivedLikes = async (req, res) => {
       if (!like.senderId) return false
       if (like.senderId.isSuspended === true) return false
       if (matchedUserIds.includes(like.senderId._id.toString())) return false
+      if (reportedUserIds.includes(like.senderId._id.toString())) return false
       return true
     })
 
@@ -196,6 +209,7 @@ export const getIncomingLikes = async (req, res) => {
     }
 
     const matchedUserIds = await getMatchedUserIds(userId)
+    const reportedUserIds = await getReportedUserIdsByReporter(userId)
 
     const likes = await Like.find({
       receiverId: userId
@@ -205,6 +219,7 @@ export const getIncomingLikes = async (req, res) => {
       if (!like.senderId) return false
       if (like.senderId.isSuspended === true) return false
       if (matchedUserIds.includes(like.senderId._id.toString())) return false
+      if (reportedUserIds.includes(like.senderId._id.toString())) return false
       return true
     })
 
@@ -261,6 +276,7 @@ export const getIncomingLikesCount = async (req, res) => {
     }
 
     const matchedUserIds = await getMatchedUserIds(userId)
+    const reportedUserIds = await getReportedUserIdsByReporter(userId)
 
     const likes = await Like.find({
       receiverId: userId
@@ -270,6 +286,7 @@ export const getIncomingLikesCount = async (req, res) => {
       if (!like.senderId) return false
       if (like.senderId.isSuspended === true) return false
       if (matchedUserIds.includes(like.senderId._id.toString())) return false
+      if (reportedUserIds.includes(like.senderId._id.toString())) return false
       return true
     }).length
 

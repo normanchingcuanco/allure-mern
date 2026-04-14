@@ -1,17 +1,49 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import api from "../api/axios"
 import Navbar from "../components/Navbar"
+import socket from "../socket"
+import { useAuth } from "../context/AuthContext"
 
 export default function AdminReports() {
   const navigate = useNavigate()
+  const auth = useAuth()
+  const hasLoadedOnceRef = useRef(false)
 
   const [reports, setReports] = useState([])
   const [loading, setLoading] = useState(true)
   const [processingKey, setProcessingKey] = useState("")
 
-  const isAdmin = localStorage.getItem("isAdmin") === "true"
-  const adminUserId = localStorage.getItem("userId")
+  const isAdmin = String(auth?.isAdmin ?? localStorage.getItem("isAdmin")) === "true"
+  const adminUserId = auth?.userId || localStorage.getItem("userId")
+
+  const fetchReports = useCallback(async (options = {}) => {
+    const { silent = false } = options
+
+    try {
+      if (!silent && !hasLoadedOnceRef.current) {
+        setLoading(true)
+      }
+
+      const res = await api.get("/admin/reports")
+      setReports(res.data || [])
+      hasLoadedOnceRef.current = true
+    } catch (error) {
+      console.error(error)
+
+      if (!silent) {
+        alert("Failed to load reports")
+      }
+    } finally {
+      if (!silent && !hasLoadedOnceRef.current) {
+        setLoading(false)
+      }
+
+      if (hasLoadedOnceRef.current) {
+        setLoading(false)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     if (!isAdmin) {
@@ -21,21 +53,58 @@ export default function AdminReports() {
     }
 
     fetchReports()
-  }, [])
+  }, [isAdmin, navigate, fetchReports])
 
-  const fetchReports = async () => {
-    try {
-      setLoading(true)
+  useEffect(() => {
+    if (!isAdmin || !adminUserId) return
 
-      const res = await api.get("/admin/reports")
-      setReports(res.data || [])
-    } catch (error) {
-      console.error(error)
-      alert("Failed to load reports")
-    } finally {
-      setLoading(false)
+    const registerCurrentUser = () => {
+      socket.emit("register_user", adminUserId)
     }
-  }
+
+    if (!socket.connected) {
+      socket.connect()
+    }
+
+    registerCurrentUser()
+
+    const handleConnect = () => {
+      registerCurrentUser()
+      fetchReports({ silent: true })
+    }
+
+    const handleRefresh = (data) => {
+      if (!data) return
+
+      if (data.type === "admin_reports_updated") {
+        fetchReports({ silent: true })
+        return
+      }
+
+      if (data.type === "user_suspended" || data.type === "user_unsuspended") {
+        fetchReports({ silent: true })
+      }
+    }
+
+    const handleWindowFocus = () => {
+      fetchReports({ silent: true })
+    }
+
+    const pollingInterval = setInterval(() => {
+      fetchReports({ silent: true })
+    }, 5000)
+
+    window.addEventListener("focus", handleWindowFocus)
+    socket.on("connect", handleConnect)
+    socket.on("notifications_refresh", handleRefresh)
+
+    return () => {
+      clearInterval(pollingInterval)
+      window.removeEventListener("focus", handleWindowFocus)
+      socket.off("connect", handleConnect)
+      socket.off("notifications_refresh", handleRefresh)
+    }
+  }, [isAdmin, adminUserId, fetchReports])
 
   const handleSuspendUser = async (userId) => {
     const confirmed = window.confirm("Are you sure you want to suspend this user?")
@@ -47,7 +116,7 @@ export default function AdminReports() {
       await api.patch(`/admin/suspend/${userId}`)
 
       alert("User suspended")
-      fetchReports()
+      fetchReports({ silent: true })
     } catch (error) {
       console.error(error)
       alert(error.response?.data?.message || "Failed to suspend user")
@@ -66,7 +135,7 @@ export default function AdminReports() {
       await api.patch(`/admin/unsuspend/${userId}`)
 
       alert("User unsuspended")
-      fetchReports()
+      fetchReports({ silent: true })
     } catch (error) {
       console.error(error)
       alert(error.response?.data?.message || "Failed to unsuspend user")
@@ -87,7 +156,7 @@ export default function AdminReports() {
       })
 
       alert("Report resolved")
-      fetchReports()
+      fetchReports({ silent: true })
     } catch (error) {
       console.error(error)
       alert(error.response?.data?.message || "Failed to resolve report")
@@ -106,7 +175,7 @@ export default function AdminReports() {
       await api.delete(`/admin/delete/${userId}`)
 
       alert("User deleted")
-      fetchReports()
+      fetchReports({ silent: true })
     } catch (error) {
       console.error(error)
       alert(error.response?.data?.message || "Failed to delete user")
